@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import cors from "cors";
 import { GoogleGenAI } from "@google/genai";
+import https from "https";
+import fs from "fs";
 
 dotenv.config();
 
@@ -86,6 +88,125 @@ async function createServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
   });
 
+  // Global map to track active downloads to avoid duplicate simultaneous downloads for the same file
+  const activeDownloads = new Map<string, Promise<string>>();
+
+  app.get("/api/video-proxy", (req, res) => {
+    const fileId = req.query.id as string || "1K8I6-RjaWRO9s36OP4eHryrBzXa8LLkH";
+    const cachePath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
+    const tempPath = path.join(process.cwd(), `video_cache_${fileId}.tmp`);
+
+    // If the complete cached file exists, serve it directly
+    if (fs.existsSync(cachePath)) {
+      return res.sendFile(cachePath, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "video/mp4",
+        }
+      });
+    }
+
+    const googleUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+
+    // Start background download to cache if not already downloading
+    if (!activeDownloads.has(fileId)) {
+      const downloadPromise = new Promise<string>((resolve, reject) => {
+        console.log(`Starting background cache download for video ID: ${fileId}`);
+        const fileStream = fs.createWriteStream(tempPath);
+        
+        const download = (url: string) => {
+          https.get(url, (googleRes) => {
+            if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
+              download(googleRes.headers.location);
+              return;
+            }
+            if (googleRes.statusCode !== 200) {
+              fileStream.close();
+              try { fs.unlinkSync(tempPath); } catch { /* ignore if already unlinked */ }
+              reject(new Error(`Failed to download from Google Drive, status: ${googleRes.statusCode}`));
+              return;
+            }
+
+            googleRes.pipe(fileStream);
+
+            fileStream.on("finish", () => {
+              fileStream.close();
+              try {
+                fs.renameSync(tempPath, cachePath);
+                console.log(`Successfully cached video ${fileId} locally!`);
+                resolve(cachePath);
+              } catch (err) {
+                reject(err);
+              }
+            });
+          }).on("error", (err) => {
+            fileStream.close();
+            try { fs.unlinkSync(tempPath); } catch { /* ignore if already unlinked */ }
+            reject(err);
+          });
+        };
+
+        download(googleUrl);
+      });
+
+      activeDownloads.set(fileId, downloadPromise);
+      downloadPromise.catch((err) => {
+        console.error(`Background download failed for ${fileId}:`, err);
+        activeDownloads.delete(fileId);
+      });
+    }
+
+    // For the current request, if the file is not cached yet, we proxy the stream directly to the client.
+    // This ensures the video starts playing immediately on the first load while caching compiles in the background.
+    const requestOptions: https.RequestOptions = {
+      headers: {}
+    };
+    if (req.headers.range) {
+      requestOptions.headers!["Range"] = req.headers.range;
+    }
+
+    const proxyStream = (targetUrl: string) => {
+      https.get(targetUrl, requestOptions, (googleRes) => {
+        if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
+          proxyStream(googleRes.headers.location);
+          return;
+        }
+
+        res.status(googleRes.statusCode || 200);
+        
+        // Forward headers except CSP and Attachment dispositive headers
+        Object.entries(googleRes.headers).forEach(([key, value]) => {
+          if (value !== undefined) {
+            const lowerKey = key.toLowerCase();
+            if (lowerKey === "content-disposition") {
+              res.setHeader("Content-Disposition", "inline");
+            } else if (
+              lowerKey !== "cross-origin-resource-policy" && 
+              lowerKey !== "cross-origin-opener-policy" && 
+              lowerKey !== "cross-origin-embedder-policy" &&
+              lowerKey !== "content-security-policy" &&
+              lowerKey !== "x-content-security-policy" &&
+              lowerKey !== "x-frame-options"
+            ) {
+              res.setHeader(key, value);
+            }
+          }
+        });
+
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Content-Disposition", "inline");
+        googleRes.pipe(res);
+      }).on("error", (err) => {
+        console.error("Proxy stream error:", err);
+        if (!res.headersSent) {
+          res.status(500).send("Video streaming error");
+        }
+      });
+    };
+
+    proxyStream(googleUrl);
+  });
+
   app.post("/api/gemini/chat", async (req, res) => {
     const { message } = req.body;
     
@@ -98,13 +219,25 @@ async function createServer() {
     
     try {
       const ai = getGenAI();
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: message || "Hello",
-        config: {
-          systemInstruction: "You are the Rasayan 2026 Assistant. Rasayan is the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce. This year's theme is 'Panchtatva'. You help users with event information, registration queries, and general fest details.\n\nHere are the official event/game prices for registration:\n- Green Mind Battle (Quiz): ₹50 (Solo)\n- Mindscape 17 (Memory Challenge): ₹50 (Solo)\n- Elemental Sharks (Shark Tank): ₹150 (Group up to 3)\n- Tatva Trail (Minute to Win It): ₹250 (Group of 5)\n- Eco-forensics: ₹150 (Group up to 3)\n- Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5)\n- Atomic Shuffle: ₹30 (Solo)\n- Kismat (Housie): ₹20 (Solo)\n- Doodleium (Doodling): ₹40 (Solo, Online)\n- Eco-vision (Photography): ₹40 (Solo, Online)\n- Reel-iemental (Reels): ₹40 (Solo, Online)\n- Labellab (Label Designing): ₹40 (Solo, Online)\n- Sustain-a-meme (Memes): ₹20 (Solo, Online)\n\nIf you don't know something, be honest. Keep replies concise, clean, and friendly. Avoid using raw markdown symbols for formatting that look like code blocks, but bold text using **bold** is completely fine. If the user wants to talk to a human admin, tell them they can switch to 'Admin Chat' mode in the chatbot.",
-        },
-      });
+      let response;
+      try {
+        response = await ai.models.generateContent({
+          model: "gemini-3.1-flash-lite",
+          contents: message || "Hello",
+          config: {
+            systemInstruction: "You are the Rasayan 2026 Assistant. Rasayan is the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce. This year's theme is 'Panchtatva'. You help users with event information, registration queries, and general fest details.\n\nHere are the official event/game prices for registration:\n- Green Mind Battle (Quiz): ₹50 (Solo)\n- Mindscape 17 (Memory Challenge): ₹50 (Solo)\n- Elemental Sharks (Shark Tank): ₹150 (Group up to 3)\n- Tatva Trail (Minute to Win It): ₹250 (Group of 5)\n- Eco-forensics: ₹150 (Group up to 3)\n- Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5)\n- Atomic Shuffle: ₹30 (Solo)\n- Kismat (Housie): ₹20 (Solo)\n- Doodleium (Doodling): ₹40 (Solo, Online)\n- Eco-vision (Photography): ₹40 (Solo, Online)\n- Reel-iemental (Reels): ₹40 (Solo, Online)\n- Labellab (Label Designing): ₹40 (Solo, Online)\n- Sustain-a-meme (Memes): ₹20 (Solo, Online)\n\nIf you don't know something, be honest. Keep replies concise, clean, and friendly. Avoid using raw markdown symbols for formatting that look like code blocks, but bold text using **bold** is completely fine. If the user wants to talk to a human admin, tell them they can switch to 'Admin Chat' mode in the chatbot.",
+          },
+        });
+      } catch (liteError: any) {
+        console.warn("gemini-3.1-flash-lite failed, trying gemini-3.5-flash fallback:", liteError);
+        response = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: message || "Hello",
+          config: {
+            systemInstruction: "You are the Rasayan 2026 Assistant. Rasayan is the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce. This year's theme is 'Panchtatva'. You help users with event information, registration queries, and general fest details.\n\nHere are the official event/game prices for registration:\n- Green Mind Battle (Quiz): ₹50 (Solo)\n- Mindscape 17 (Memory Challenge): ₹50 (Solo)\n- Elemental Sharks (Shark Tank): ₹150 (Group up to 3)\n- Tatva Trail (Minute to Win It): ₹250 (Group of 5)\n- Eco-forensics: ₹150 (Group up to 3)\n- Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5)\n- Atomic Shuffle: ₹30 (Solo)\n- Kismat (Housie): ₹20 (Solo)\n- Doodleium (Doodling): ₹40 (Solo, Online)\n- Eco-vision (Photography): ₹40 (Solo, Online)\n- Reel-iemental (Reels): ₹40 (Solo, Online)\n- Labellab (Label Designing): ₹40 (Solo, Online)\n- Sustain-a-meme (Memes): ₹20 (Solo, Online)\n\nIf you don't know something, be honest. Keep replies concise, clean, and friendly. Avoid using raw markdown symbols for formatting that look like code blocks, but bold text using **bold** is completely fine. If the user wants to talk to a human admin, tell them they can switch to 'Admin Chat' mode in the chatbot.",
+          },
+        });
+      }
 
       if (!response || !response.text) {
         throw new Error("Empty response from AI");

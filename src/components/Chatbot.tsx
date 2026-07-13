@@ -36,9 +36,9 @@ export default function Chatbot() {
     return () => window.removeEventListener('open-support-chat', handleOpen);
   }, []);
 
-  // Fetch Support & AI Chat History
+  // Fetch Support & AI Chat History (Cache in background as soon as user is logged in)
   useEffect(() => {
-    if (!user || !isOpen) return;
+    if (!user) return;
 
     const q = query(
       collection(db, 'support_messages'),
@@ -74,19 +74,23 @@ export default function Chatbot() {
         ]);
       }
       setAdminMessages(fetchedAdmin);
-      
-      // Mark as read when open in admin mode
-      if (mode === 'admin') {
-        fetchedAdmin.forEach(msg => {
-          if (msg.sender === 'admin' && !msg.isRead) {
-            updateDoc(doc(db, 'support_messages', msg.id), { isRead: true });
-          }
-        });
-      }
     });
 
     return () => unsubscribe();
-  }, [user, isOpen, mode]);
+  }, [user]);
+
+  // Mark admin messages as read when opening admin mode
+  useEffect(() => {
+    if (user && isOpen && mode === 'admin' && adminMessages.length > 0) {
+      adminMessages.forEach(msg => {
+        if (msg.sender === 'admin' && !msg.isRead) {
+          updateDoc(doc(db, 'support_messages', msg.id), { isRead: true }).catch(err => {
+            console.error("Error marking message as read:", err);
+          });
+        }
+      });
+    }
+  }, [user, isOpen, mode, adminMessages]);
 
   // Handle Unread Count (Admin messages only)
   useEffect(() => {
@@ -106,6 +110,18 @@ export default function Chatbot() {
     }
   }, [adminMessages, aiMessages, isOpen, mode]);
 
+  // Prevent background body scrolling on mobile when chatbot is open
+  useEffect(() => {
+    if (isOpen && window.innerWidth < 640) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || !user) return;
@@ -115,21 +131,29 @@ export default function Chatbot() {
     setLoading(true);
 
     if (mode === 'ai') {
-      // 1. Add user message to Firestore AI Chat History
-      try {
-        await addDoc(collection(db, 'support_messages'), {
-          userId: user.uid,
-          userName: profile?.name || user.displayName || 'User',
-          userEmail: user.email,
-          text: currentMessage,
-          sender: 'user',
-          timestamp: serverTimestamp(),
-          isRead: true, // Don't block admin queue
-          isAiChat: true
-        });
-      } catch (error) {
+      // Optimistically add user message locally for instant responsiveness
+      const optimisticUserMsg = {
+        id: 'opt_user_' + Date.now(),
+        text: currentMessage,
+        sender: 'user',
+        timestamp: new Date(),
+        isAiChat: true
+      };
+      setAiMessages(prev => [...prev.filter(m => m.id !== 'welcome'), optimisticUserMsg]);
+
+      // 1. Add user message to Firestore AI Chat History (non-blocking for speed)
+      addDoc(collection(db, 'support_messages'), {
+        userId: user.uid,
+        userName: profile?.name || user.displayName || 'User',
+        userEmail: user.email,
+        text: currentMessage,
+        sender: 'user',
+        timestamp: serverTimestamp(),
+        isRead: true, // Don't block admin queue
+        isAiChat: true
+      }).catch(error => {
         console.error("Error saving user message to AI logs:", error);
-      }
+      });
 
       // 2. Fetch response from Gemini
       try {
@@ -147,8 +171,18 @@ export default function Chatbot() {
         const data = await response.json();
         const aiResponseText = data.text || "I'm sorry, I couldn't get a response. Please try again.";
         
-        // 3. Add AI response to Firestore
-        await addDoc(collection(db, 'support_messages'), {
+        // Optimistically add AI response locally for instant display
+        const optimisticAiMsg = {
+          id: 'opt_ai_' + Date.now(),
+          text: aiResponseText,
+          sender: 'ai',
+          timestamp: new Date(),
+          isAiChat: true
+        };
+        setAiMessages(prev => [...prev, optimisticAiMsg]);
+
+        // 3. Add AI response to Firestore (non-blocking so loading stops instantly)
+        addDoc(collection(db, 'support_messages'), {
           userId: user.uid,
           userName: 'AI Assistant',
           userEmail: 'ai-bot@rasayan2026.com',
@@ -157,56 +191,80 @@ export default function Chatbot() {
           timestamp: serverTimestamp(),
           isRead: true,
           isAiChat: true
+        }).catch(error => {
+          console.error("Error saving AI response:", error);
         });
       } catch (error: any) {
         console.error("AI Error:", error);
-        await addDoc(collection(db, 'support_messages'), {
+        const errMsg = `Error: ${error.message || "Failed to connect"}. Try switching to 'Admin Help'.`;
+        
+        // Optimistically add error message
+        const optimisticErrorMsg = {
+          id: 'opt_err_' + Date.now(),
+          text: errMsg,
+          sender: 'ai',
+          timestamp: new Date(),
+          isAiChat: true
+        };
+        setAiMessages(prev => [...prev, optimisticErrorMsg]);
+
+        addDoc(collection(db, 'support_messages'), {
           userId: user.uid,
           userName: 'AI Assistant',
           userEmail: 'ai-bot@rasayan2026.com',
-          text: `Error: ${error.message || "Failed to connect"}. Try switching to 'Admin Help'.`,
+          text: errMsg,
           sender: 'ai',
           timestamp: serverTimestamp(),
           isRead: true,
           isAiChat: true
+        }).catch(err => {
+          console.error("Error saving AI error response:", err);
         });
       } finally {
         setLoading(false);
       }
     } else {
-      // Admin Support Mode
-      try {
-        await addDoc(collection(db, 'support_messages'), {
-          userId: user.uid,
-          userName: profile?.name || user.displayName || 'User',
-          userEmail: user.email,
-          text: currentMessage,
-          sender: 'user',
-          timestamp: serverTimestamp(),
-          isRead: false
-        });
-      } catch (error) {
+      // Admin Support Mode (optimistic update)
+      const optimisticUserMsg = {
+        id: 'opt_admin_user_' + Date.now(),
+        text: currentMessage,
+        sender: 'user',
+        timestamp: new Date(),
+        isAiChat: false
+      };
+      setAdminMessages(prev => [...prev, optimisticUserMsg]);
+
+      // Admin Support Mode (non-blocking)
+      addDoc(collection(db, 'support_messages'), {
+        userId: user.uid,
+        userName: profile?.name || user.displayName || 'User',
+        userEmail: user.email,
+        text: currentMessage,
+        sender: 'user',
+        timestamp: serverTimestamp(),
+        isRead: false
+      }).catch(error => {
         console.error("Error sending message:", error);
-      } finally {
+      }).finally(() => {
         setLoading(false);
-      }
+      });
     }
   };
 
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <>
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="mb-4 w-80 sm:w-96 bg-white rounded-[2rem] shadow-2xl border border-brand-primary/10 flex flex-col h-[550px] overflow-hidden"
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 w-full h-[100dvh] sm:h-[550px] sm:w-96 bg-white rounded-none sm:rounded-[2rem] shadow-2xl border-none sm:border sm:border-brand-primary/10 flex flex-col overflow-hidden"
           >
             {/* Header with Mode Toggle */}
-            <div className="bg-brand-dark p-6 text-white relative overflow-hidden">
+            <div className="bg-brand-dark p-6 text-white relative overflow-hidden flex-shrink-0">
                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                <div className="flex justify-between items-center z-10 relative">
                 <div>
@@ -300,14 +358,14 @@ export default function Chatbot() {
             </div>
 
             {/* Input Area */}
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100">
+            <form onSubmit={handleSendMessage} className="p-4 pb-6 sm:pb-4 bg-white border-t border-gray-100 flex-shrink-0">
               <div className="relative flex items-center">
                 <input
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={mode === 'ai' ? "Ask the AI..." : "Message Admin..."}
-                  className="w-full bg-brand-soft border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none"
+                  className="w-full bg-brand-soft border-none rounded-2xl py-3 pl-4 pr-12 text-base sm:text-sm focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none"
                 />
                 <button
                   type="submit"
@@ -327,19 +385,21 @@ export default function Chatbot() {
         )}
       </AnimatePresence>
 
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-brand-primary text-white p-4 rounded-full shadow-lg relative group transition-all"
-      >
-        <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
-            {unreadCount}
-          </span>
-        )}
-      </motion.button>
-    </div>
+      <div className={`fixed bottom-6 right-6 z-50 ${isOpen ? 'hidden sm:block' : 'block'}`}>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-brand-primary text-white p-4 rounded-full shadow-lg relative group transition-all"
+        >
+          <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+              {unreadCount}
+            </span>
+          )}
+        </motion.button>
+      </div>
+    </>
   );
 }

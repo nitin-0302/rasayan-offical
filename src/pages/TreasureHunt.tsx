@@ -8,7 +8,7 @@ import { Map, Key, Lock, Trophy, ArrowRight, Loader2, AlertCircle, Clock, CheckC
 import { Link } from 'react-router-dom';
 
 export default function TreasureHunt() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [activeGame, setActiveGame] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
   const [allProgress, setAllProgress] = useState<any[]>([]);
@@ -164,6 +164,30 @@ export default function TreasureHunt() {
       setPin('');
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="pt-32 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-brand-primary animate-spin mb-4" />
+        <p className="text-text-muted font-bold tracking-widest uppercase text-xs">Authenticating...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-32 pb-20 max-w-xl mx-auto px-4 text-center">
+        <div className="glass-card p-12 rounded-[2.5rem]">
+          <h2 className="text-3xl font-serif text-brand-dark mb-4">Treasure Hunt Locked</h2>
+          <p className="text-text-muted mb-8">Please sign in with Google to view and participate in live treasure hunts.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/register" className="btn-primary py-3 px-8">Sign In with Google</Link>
+            <Link to="/" className="btn-secondary py-3 px-8">Return Home</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

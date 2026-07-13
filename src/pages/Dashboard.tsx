@@ -137,11 +137,16 @@ export default function Dashboard() {
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif text-brand-dark mb-3">Dashboard Locked</h2>
           <p className="text-text-muted mb-8 text-xs sm:text-sm leading-relaxed">
-            Please register or sign in using a verified account to view active schedules, customized results, and profiles.
+            Please register or sign in with Google to view your active schedules, customized results, and profiles.
           </p>
-          <Link to="/" className="btn-primary inline-flex items-center justify-center py-3 px-6 font-bold text-sm tracking-wide">
-            Go to Welcome Screen
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/register" className="btn-primary inline-flex items-center justify-center py-3 px-6 font-bold text-sm tracking-wide">
+              Sign In with Google
+            </Link>
+            <Link to="/" className="btn-secondary inline-flex items-center justify-center py-3 px-6 font-bold text-sm tracking-wide">
+              Welcome Screen
+            </Link>
+          </div>
         </div>
       </div>
     );

@@ -50,7 +50,7 @@ const COLLEGES = [
 ];
 
 export default function Register() {
-  const { user, profile, loading, login, isAuthenticating } = useAuth();
+  const { user, profile, loading, login, isAuthenticating, authError } = useAuth();
   const { events } = useEvents();
   const navigate = useNavigate();
   
@@ -64,6 +64,8 @@ export default function Register() {
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cash'>('upi');
   const [transactionId, setTransactionId] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const [localAuthError] = useState<string | null>(null);
 
   const handleCopyUPI = () => {
     navigator.clipboard.writeText('brothernitin99@okaxis');
@@ -261,28 +263,64 @@ export default function Register() {
   }
 
   if (!user) {
+    const activeError = localAuthError || authError;
+
     return (
-      <div className="pt-32 pb-20 max-w-xl mx-auto px-4 text-center">
-        <div className="glass-card p-12 rounded-[2.5rem]">
-          <div className="bg-brand-soft w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8">
-            <AlertCircle className="text-brand-primary w-10 h-10" />
+      <div className="pt-32 pb-20 max-w-xl mx-auto px-4">
+        <div className="glass-card p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-white/20">
+          <div className="text-center mb-8">
+            <div className="bg-brand-soft w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="text-brand-primary w-8 h-8" />
+            </div>
+            <h2 className="text-3xl font-serif text-brand-dark mb-2">Authentication Required</h2>
+            <p className="text-text-muted">Sign in with Google to access the event registration system.</p>
           </div>
-          <h2 className="text-3xl font-serif text-brand-dark mb-4">Authentication Required</h2>
-          <p className="text-text-muted mb-8">Please sign in to access the multi-event registration system.</p>
-          <button 
-            onClick={login} 
-            disabled={isAuthenticating}
-            className="btn-primary w-full py-4 text-lg disabled:bg-gray-400 flex items-center justify-center gap-2"
-          >
-            {isAuthenticating ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              'Sign In with Google'
-            )}
-          </button>
+
+          {activeError && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex flex-col gap-3 text-left">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
+                <div>{activeError}</div>
+              </div>
+              {(activeError.toLowerCase().includes("popup") || activeError.toLowerCase().includes("cookie") || activeError.toLowerCase().includes("security") || activeError.toLowerCase().includes("domain")) && (
+                <a
+                  href={window.location.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-all duration-200 shadow-md w-fit"
+                >
+                  Open App in New Tab ↗
+                </a>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <button 
+              onClick={() => login()} 
+              disabled={isAuthenticating}
+              className="btn-primary w-full py-4 text-lg disabled:bg-gray-400 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {isAuthenticating ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                'Sign In with Google'
+              )}
+            </button>
+
+            <div className="border-t border-gray-100 pt-6 text-left">
+              <h4 className="text-xs font-bold text-brand-dark tracking-wider uppercase mb-3">Google Sign-In</h4>
+              <div className="space-y-3 text-xs text-text-muted">
+                <div className="p-3 bg-neutral-50 rounded-lg">
+                  <p className="font-semibold text-brand-dark mb-1">Using Safari or incognito modes?</p>
+                  <p>Some browsers blocks cross-site login popups. Please make sure that popups are allowed, or sign in using a standard browser window (like Google Chrome).</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -377,6 +377,19 @@ export default function Community() {
                             </span>
                           )}
                           <span className="text-[8px] font-mono font-medium opacity-65">{displayTime}</span>
+
+                          {/* Always-visible Delete button for Admins and Co-Admins */}
+                          {(isAdmin || isCoAdmin) && (
+                            <button 
+                              onClick={() => handleDeleteMessage(msg.id)}
+                              className={`px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-widest bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200 transition-all duration-200 cursor-pointer flex items-center gap-0.5 ${
+                                isOwnMessage ? 'mr-1.5' : 'ml-1.5'
+                              }`}
+                              title="Delete Chat Message"
+                            >
+                              <Trash2 className="w-2.5 h-2.5" /> Delete
+                            </button>
+                          )}
                         </div>
 
                         {/* Bubble */}

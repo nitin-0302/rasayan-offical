@@ -8,7 +8,7 @@ import { Brain, Clock, CheckCircle2, ChevronRight, Trophy, AlertCircle, Loader2,
 import { Link } from 'react-router-dom';
 
 export default function Quiz() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [activeQuiz, setActiveQuiz] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userResponse, setUserResponse] = useState<any>(null);
@@ -399,6 +399,30 @@ export default function Quiz() {
     setError(null);
     setCurrentStep('intro');
   };
+
+  if (authLoading) {
+    return (
+      <div className="pt-32 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-brand-primary animate-spin mb-4" />
+        <p className="text-text-muted font-bold tracking-widest uppercase text-xs">Authenticating...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-32 pb-20 max-w-xl mx-auto px-4 text-center">
+        <div className="glass-card p-12 rounded-[2.5rem]">
+          <h2 className="text-3xl font-serif text-brand-dark mb-4">Quiz Access Restricted</h2>
+          <p className="text-text-muted mb-8">Please sign in with Google to view and participate in live quizzes.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/register" className="btn-primary py-3 px-8">Sign In with Google</Link>
+            <Link to="/" className="btn-secondary py-3 px-8">Return Home</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

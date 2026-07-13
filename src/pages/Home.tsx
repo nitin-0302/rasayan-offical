@@ -4,6 +4,23 @@ import { Link } from 'react-router-dom';
 import { FlaskConical, ArrowRight, TreePine, Droplets, Flame, Wind, Space } from 'lucide-react';
 import { AtomicVector, BeakerVector, LabStructureVector, DNAVector } from '../components/ChemistryVectors';
 
+const DEFAULT_VIDEO_URL = 'https://drive.google.com/file/d/1QePHrtCffJD4oREs6rvtPvS9-J2BYJe_/view?usp=sharing';
+
+const getYouTubeId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const getGoogleDriveId = (url: string) => {
+  if (!url) return null;
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : null;
+  }
+  return null;
+};
+
 const PanchtatvaCards = [
   { name: 'Earth (Prithvi)', icon: TreePine, desc: 'Stability and grounding in our chemical origins.', color: 'text-brand-primary' },
   { name: 'Water (Jal)', icon: Droplets, desc: 'The universal solvent that sustains life.', color: 'text-blue-600' },
@@ -13,12 +30,73 @@ const PanchtatvaCards = [
 ];
 
 export default function Home() {
+  const videoUrl = DEFAULT_VIDEO_URL;
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.load();
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn("Autoplay was prevented or failed:", err);
+        });
+      }
+    }
+  }, [videoUrl]);
+
   return (
     <div className="pt-16 min-h-screen">
       
       {/* Hero Section */}
-      <section className="relative min-h-[500px] md:h-[80vh] py-20 md:py-0 flex items-center justify-center overflow-hidden bg-brand-dark">
-        <div className="absolute inset-0 opacity-10">
+      <section className="relative min-h-[550px] md:min-h-0 md:aspect-[16/9] w-full py-20 md:py-0 flex items-center justify-center overflow-hidden bg-black">
+        {/* Working Loopable Video Background */}
+        <div className="absolute inset-0 z-0">
+          <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+            {getYouTubeId(videoUrl) ? (
+              <iframe
+                key={getYouTubeId(videoUrl)}
+                src={`https://www.youtube.com/embed/${getYouTubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeId(videoUrl)}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1&disablekb=1&origin=${window.location.origin}`}
+                className="absolute opacity-25 mix-blend-screen pointer-events-none"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  width: '100vw',
+                  height: '56.25vw',
+                  minHeight: '100%',
+                  minWidth: '177.77vh',
+                  transform: 'translate(-50%, -50%) scale(1.35)',
+                }}
+                allow="autoplay; encrypted-media"
+                frameBorder="0"
+                title="Banner background video"
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                key={videoUrl}
+                src={getGoogleDriveId(videoUrl) ? `/api/video-proxy?id=${getGoogleDriveId(videoUrl)}` : videoUrl}
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                playsInline={true}
+                preload="auto"
+                className="w-full h-full object-cover absolute inset-0 opacity-85"
+                onError={() => {
+                  console.warn("Banner background video failed to play or load. Falling back to static vectors.");
+                }}
+              />
+            )}
+          </div>
+          {/* Subtle vignette/gradient overlay to maintain premium aesthetics and text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/70" />
+        </div>
+
+        {/* Chem Vectors Floating Foreground */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none z-10">
           <div className="absolute top-10 left-10 w-48 h-48 text-brand-primary animate-pulse">
             <AtomicVector />
           </div>
