@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
@@ -300,6 +299,7 @@ async function createServer() {
   });
 
   if (!isProduction) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -329,8 +329,12 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   startServer();
 }
 
+let cachedApp: any = null;
+
 export default async (req: any, res: any) => {
-  const app = await createServer();
-  return app(req, res);
+  if (!cachedApp) {
+    cachedApp = await createServer();
+  }
+  return cachedApp(req, res);
 };
 
