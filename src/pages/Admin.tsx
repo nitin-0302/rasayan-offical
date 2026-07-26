@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, orderBy, query, doc, updateDoc, onSnapshot, setDoc, writeBatch, deleteDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
-import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle } from 'lucide-react';
+import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -1257,6 +1257,15 @@ export default function Admin() {
                               >
                                 <Save className="w-3.5 h-3.5" />
                               </button>
+                              <a
+                                href={`/#/verify?code=${reg.uniqueCode}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors flex items-center gap-1 text-[9px] font-bold uppercase"
+                                title="Verify Pass QR"
+                              >
+                                <QrCode className="w-3.5 h-3.5" /> Pass
+                              </a>
                               {!isReadOnly && (
                                 <button 
                                   onClick={() => handleDeleteRegistration(reg.id, reg.userName)}

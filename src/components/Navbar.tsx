@@ -14,6 +14,7 @@ export default function Navbar() {
     { name: 'Live Events', path: '/games' },
     { name: 'Community', path: '/community' },
     { name: 'Register', path: '/register' },
+    { name: 'Verify Pass', path: '/verify' },
   ];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);

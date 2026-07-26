@@ -6,8 +6,8 @@ import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Calendar, Award, Settings, User as UserIcon, Check, Clock, XCircle, Info, Brain, Map, Shield, Trophy, Download, Headphones, MessageSquare } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { Sparkles, Calendar, Award, Settings, User as UserIcon, Check, Clock, XCircle, Info, Brain, Map, Shield, Headphones, MessageSquare, QrCode } from 'lucide-react';
+import EntryPassModal from '../components/EntryPassModal';
 
 const RegistrationSkeleton = () => (
   <div className="glass-card p-5 sm:p-8 rounded-[1.8rem] sm:rounded-[2.5rem] relative overflow-hidden ring-1 ring-gray-100/50 bg-white/60">
@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [editForm, setEditForm] = useState({ name: '', college: '', phone: '' });
   const [quizActive, setQuizActive] = useState(false);
   const [treasureActive, setTreasureActive] = useState(false);
+  const [selectedPassReg, setSelectedPassReg] = useState<any | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -389,36 +390,22 @@ export default function Dashboard() {
                       </div>
 
                       {reg.paymentStatus === 'approved' && (
-                        <div className="mb-4 p-3.5 bg-green-50 border border-green-100 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
+                        <div className="mb-4 p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left shadow-sm">
                           <div className="flex items-start gap-2.5">
-                            <Trophy className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                            <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-sm">
+                              <QrCode className="w-4 h-4" />
+                            </div>
                             <div>
-                              <p className="text-xs font-bold text-green-800">Your seat is fully confirmed!</p>
-                              <p className="text-[10px] text-green-600 mt-0.5">Please download and show your entry pass on location.</p>
+                              <p className="text-xs font-bold text-emerald-950">Seat Confirmed • Scannable Pass Ready</p>
+                              <p className="text-[10px] text-emerald-700 mt-0.5">Your holographic entry pass with unique anti-counterfeit QR code is ready.</p>
                             </div>
                           </div>
                           <button 
-                            onClick={() => {
-                              const docPdf = new jsPDF('l', 'mm', 'a4') as any;
-                              docPdf.setDrawColor(220, 38, 38); 
-                              docPdf.setLineWidth(2);
-                              docPdf.rect(10, 10, 277, 190);
-                              docPdf.setFontSize(40);
-                              docPdf.text("RASAYAN 2026", 148, 60, { align: 'center' });
-                              docPdf.setFontSize(20);
-                              docPdf.text("ENTRY PASS & PARTICIPANT VOUCHER", 148, 80, { align: 'center' });
-                              docPdf.setFontSize(14);
-                              docPdf.text("This is to certify that", 148, 100, { align: 'center' });
-                              docPdf.setFontSize(24);
-                              docPdf.text(reg.userName || 'Participant', 148, 115, { align: 'center' });
-                              docPdf.setFontSize(14);
-                              docPdf.text("has successfully registered for Rasayan 2026", 148, 130, { align: 'center' });
-                              docPdf.text("Registration code: #" + reg.uniqueCode, 148, 150, { align: 'center' });
-                              docPdf.save(`Rasayan_Pass_${reg.uniqueCode}.pdf`);
-                            }}
-                            className="w-full sm:w-auto bg-green-600 text-white px-3.5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-green-700 transition-all flex items-center justify-center gap-1.5 shrink-0 select-none cursor-pointer"
+                            onClick={() => setSelectedPassReg(reg)}
+                            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shrink-0 shadow-sm cursor-pointer"
                           >
-                            <Download className="w-3.5 h-3.5 shrink-0" /> Download Pass
+                            <QrCode className="w-3.5 h-3.5 shrink-0" />
+                            <span>View Digital Pass</span>
                           </button>
                         </div>
                       )}
@@ -554,6 +541,13 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {selectedPassReg && (
+        <EntryPassModal
+          registration={selectedPassReg}
+          onClose={() => setSelectedPassReg(null)}
+        />
+      )}
     </div>
   );
 }
