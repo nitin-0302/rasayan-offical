@@ -566,7 +566,7 @@ export default function Quiz() {
                       <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        key={p.id || idx}
+                        key={p.id || p.userId || `connected-${idx}`}
                         className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0"
                       >
                         <div className="flex items-center gap-2">
@@ -735,7 +735,7 @@ export default function Quiz() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {activeQuiz.questions[currentQuestionIndex].options.map((option: string, i: number) => (
                               <button
-                                key={i}
+                                key={`qopt-${i}`}
                                 onClick={() => handleNextQuestion(i)}
                                 className="p-6 text-left rounded-2xl border-2 border-gray-100 hover:border-brand-primary hover:bg-brand-soft/30 transition-all group flex items-center gap-4 bg-white shadow-sm"
                               >
@@ -757,7 +757,7 @@ export default function Quiz() {
                           </div>
                           <div className="space-y-4">
                             {[...allResponses].sort((a: any, b: any) => b.score - a.score).map((res, i) => (
-                              <div key={res.id || `res-${i}`} className="flex items-center justify-between">
+                              <div key={res.id || res.userId || `qres-side-${i}`} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                   <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${i === 0 ? 'bg-amber-500' : 'bg-white/10'}`}>
                                     {i + 1}

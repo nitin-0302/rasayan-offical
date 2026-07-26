@@ -20,8 +20,6 @@ export default function CursorGlow() {
   const animFrameId = useRef<number | null>(null);
 
   useEffect(() => {
-    let particleIdCounter = 0;
-
     const handleMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - prevPos.current.x;
       const dy = e.clientY - prevPos.current.y;
@@ -40,7 +38,7 @@ export default function CursorGlow() {
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         
         const newParticle: Particle = {
-          id: particleIdCounter++,
+          id: Date.now() + Math.random(),
           x: e.clientX + (Math.random() * 6 - 3), // directly out of the test tube rim
           y: e.clientY + (Math.random() * 4 - 2),
           size: Math.random() * 5 + 3,
@@ -110,9 +108,9 @@ export default function CursorGlow() {
       />
 
       {/* Chemical Gas / Bubbles floating upward */}
-      {particles.map(p => (
+      {particles.map((p, pIdx) => (
         <div
-          key={p.id}
+          key={`cg-particle-${p.id}-${pIdx}`}
           className="fixed top-0 left-0 rounded-full pointer-events-none shadow-sm"
           style={{
             transform: `translate3d(${p.x}px, ${p.y}px, 0) translate(-50%, -50%)`,
@@ -129,8 +127,8 @@ export default function CursorGlow() {
       <div
         className="fixed top-0 left-0 pointer-events-none transition-transform duration-75 ease-out flex items-center justify-center"
         style={{
-          transform: `translate3d(${pos.x - 16}px, ${pos.y - 3}px, 0) rotate(${rotation}deg)`,
-          transformOrigin: '16px 3px',
+          transform: `translate3d(${pos.x - 16}px, ${pos.y - 2.67}px, 0) rotate(${rotation}deg)`,
+          transformOrigin: '16px 2.67px',
         }}
       >
         <div className="relative filter drop-shadow-[0_4px_12px_rgba(220,38,38,0.45)]">

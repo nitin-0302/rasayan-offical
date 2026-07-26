@@ -72,50 +72,50 @@
 
 /* macOS Tinted Buttons styling */
 .btn-primary {
-  @apply relative inline-flex items-center justify-center px-6 py-2.5 rounded-full font-medium text-white text-sm transition-all duration-200 ease-out select-none cursor-pointer;
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.92) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  @apply relative inline-flex items-center justify-center px-6 py-2.5 rounded-full font-semibold text-white text-sm transition-all duration-200 ease-out select-none cursor-pointer;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.98) 0%, rgba(220, 38, 38, 0.95) 50%, rgba(185, 28, 28, 0.98) 100%);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.5),
-    0 4px 16px 0 rgba(220, 38, 38, 0.28);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
+    0 4px 18px 0 rgba(220, 38, 38, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, rgba(239, 68, 68, 1) 0%, rgba(220, 38, 38, 0.98) 100%);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 1) 0%, rgba(239, 68, 68, 1) 50%, rgba(220, 38, 38, 1) 100%);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
-    0 6px 22px 0 rgba(220, 38, 38, 0.38);
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.9),
+    0 8px 24px 0 rgba(220, 38, 38, 0.45);
   transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0.5px) scale(0.98);
   box-shadow: 
-    inset 0 1px 2px 0 rgba(0, 0, 0, 0.25),
-    0 2px 8px 0 rgba(220, 38, 38, 0.2);
+    inset 0 1px 2px 0 rgba(0, 0, 0, 0.3),
+    0 2px 8px 0 rgba(220, 38, 38, 0.25);
 }
 
 .btn-secondary {
-  @apply relative inline-flex items-center justify-center px-6 py-2.5 rounded-full font-medium text-brand-dark text-sm transition-all duration-200 ease-out select-none cursor-pointer;
-  background: rgba(254, 242, 242, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  @apply relative inline-flex items-center justify-center px-6 py-2.5 rounded-full font-semibold text-brand-dark text-sm transition-all duration-200 ease-out select-none cursor-pointer;
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.95) 0%, rgba(254, 226, 226, 0.9) 100%);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.9),
-    0 3px 10px 0 rgba(220, 38, 38, 0.08);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px 0 rgba(220, 38, 38, 0.12);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(254, 226, 226, 0.95);
-  border-color: rgba(239, 68, 68, 0.45);
+  background: linear-gradient(135deg, rgba(254, 226, 226, 1) 0%, rgba(254, 202, 202, 0.95) 100%);
+  border-color: rgba(220, 38, 38, 0.6);
   color: rgba(153, 27, 27, 1);
   transform: translateY(-1px);
   box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 1),
-    0 6px 16px 0 rgba(220, 38, 38, 0.15);
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 1),
+    0 6px 18px 0 rgba(220, 38, 38, 0.2);
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -124,38 +124,38 @@
 
 /* Custom macOS Tinted Glass Utility Buttons */
 .btn-mac-tinted-red {
-  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] select-none text-red-700 bg-red-500/15 hover:bg-red-500/25 hover:text-red-800 border border-red-500/30 cursor-pointer;
+  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] select-none text-red-900 bg-red-500/20 hover:bg-red-500/30 hover:text-red-950 border border-red-500/40 cursor-pointer;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(220, 38, 38, 0.08);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.7), 0 3px 10px rgba(220, 38, 38, 0.15);
 }
 
 .btn-mac-tinted-emerald {
-  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] select-none text-emerald-800 bg-emerald-500/15 hover:bg-emerald-500/25 hover:text-emerald-900 border border-emerald-500/30 cursor-pointer;
+  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] select-none text-emerald-900 bg-emerald-500/20 hover:bg-emerald-500/30 hover:text-emerald-950 border border-emerald-500/40 cursor-pointer;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(16, 185, 129, 0.08);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.7), 0 3px 10px rgba(16, 185, 129, 0.15);
 }
 
 .btn-mac-tinted-amber {
-  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] select-none text-amber-800 bg-amber-500/15 hover:bg-amber-500/25 hover:text-amber-900 border border-amber-500/30 cursor-pointer;
+  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] select-none text-amber-900 bg-amber-500/20 hover:bg-amber-500/30 hover:text-amber-950 border border-amber-500/40 cursor-pointer;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(245, 158, 11, 0.08);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.7), 0 3px 10px rgba(245, 158, 11, 0.15);
 }
 
 .btn-mac-tinted-sky {
-  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] select-none text-sky-800 bg-sky-500/15 hover:bg-sky-500/25 hover:text-sky-900 border border-sky-500/30 cursor-pointer;
+  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] select-none text-sky-900 bg-sky-500/20 hover:bg-sky-500/30 hover:text-sky-950 border border-sky-500/40 cursor-pointer;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(14, 165, 233, 0.08);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.7), 0 3px 10px rgba(14, 165, 233, 0.15);
 }
 
 .btn-mac-tinted-gray {
-  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] select-none text-gray-700 bg-gray-500/10 hover:bg-gray-500/20 hover:text-gray-900 border border-gray-400/25 cursor-pointer;
+  @apply relative inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] select-none text-gray-800 bg-gray-500/15 hover:bg-gray-500/25 hover:text-gray-950 border border-gray-400/35 cursor-pointer;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.7), 0 3px 10px rgba(0, 0, 0, 0.06);
 }
 
 /* macOS Tinted Form Inputs */

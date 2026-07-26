@@ -52,18 +52,16 @@ export default function Home() {
     <div className="pt-16 min-h-screen">
       
       {/* Hero Section */}
-      <section className="relative min-h-[550px] md:min-h-0 md:aspect-[16/9] w-full py-20 md:py-0 flex items-center justify-center overflow-hidden bg-black">
+      <section className="relative aspect-[16/9] min-h-[420px] sm:min-h-[500px] md:min-h-0 w-full py-12 sm:py-20 md:py-0 flex items-center justify-center overflow-hidden bg-black">
         {/* Working Loopable Video Background */}
         <div className="absolute inset-0 z-0">
           <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
             {getYouTubeId(videoUrl) ? (
               <iframe
                 key={getYouTubeId(videoUrl)}
-                src={`https://www.youtube.com/embed/${getYouTubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeId(videoUrl)}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1&disablekb=1&origin=${window.location.origin}`}
-                className="absolute opacity-25 mix-blend-screen pointer-events-none"
+                src={`https://www.youtube-nocookie.com/embed/${getYouTubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeId(videoUrl)}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1&disablekb=1&playsinline=1&origin=${window.location.origin}`}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-35 mix-blend-screen pointer-events-none"
                 style={{
-                  top: '50%',
-                  left: '50%',
                   width: 'max(100vw, 177.78vh)',
                   height: 'max(56.25vw, 100vh)',
                   transform: 'translate(-50%, -50%) scale(1.15)',
@@ -150,7 +148,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {PanchtatvaCards.slice(0, 4).map((item, idx) => (
-                <div key={idx} className="glass-card-tinted p-6 hover:scale-[1.02] transition-transform">
+                <div key={`pt-card-${item.name}-${idx}`} className="glass-card-tinted p-6 hover:scale-[1.02] transition-transform">
                   <item.icon className={`w-10 h-10 ${item.color} mb-4`} />
                   <h3 className="text-xl font-bold text-brand-dark mb-2">{item.name}</h3>
                   <p className="text-sm text-text-muted">{item.desc}</p>

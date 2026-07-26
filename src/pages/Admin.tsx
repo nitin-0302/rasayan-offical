@@ -1182,7 +1182,7 @@ export default function Admin() {
                                     <div className="absolute bottom-full left-0 mb-2 invisible group-hover/item:visible bg-brand-dark text-white text-[10px] p-2 rounded-lg shadow-xl z-10 w-40">
                                       <p className="font-bold border-b border-white/20 mb-1 pb-1 uppercase tracking-wider">Team Members</p>
                                       {members.map((m: string, i: number) => (
-                                        <div key={i} className="truncate">• {m || 'Unnamed'}</div>
+                                        <div key={`tm-${reg.id || 'reg'}-${eid}-${i}`} className="truncate">• {m || 'Unnamed'}</div>
                                       ))}
                                     </div>
                                   )}
@@ -1523,7 +1523,7 @@ export default function Admin() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         {newQuestion.options.map((opt, i) => (
-                          <div key={i} className="space-y-1">
+                          <div key={`new-qopt-${i}`} className="space-y-1">
                             <label className="text-[10px] font-bold text-text-muted uppercase ml-1 flex items-center gap-2">
                               Option {i + 1}
                               <input 
@@ -1600,7 +1600,7 @@ export default function Admin() {
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Question Bank ({quizConfig?.questions?.length || 0})</p>
                   <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                     {quizConfig?.questions?.map((q: any, i: number) => (
-                      <div key={i} className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group">
+                      <div key={`qbank-${q.id || i}-${i}`} className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group">
                         <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => startEditQuestion(i)}
@@ -1623,7 +1623,7 @@ export default function Admin() {
                             <p className="text-sm font-bold text-brand-dark pr-8">{q.text}</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                               {q.options.map((opt: string, oi: number) => (
-                                <div key={oi} className={`text-[10px] ${q.correctAnswer === oi ? 'text-green-600 font-bold' : 'text-text-muted'}`}>
+                                <div key={`qopt-item-${i}-${oi}`} className={`text-[10px] ${q.correctAnswer === oi ? 'text-green-600 font-bold' : 'text-text-muted'}`}>
                                   {oi + 1}. {opt} {q.correctAnswer === oi && '✓'}
                                 </div>
                               ))}
@@ -1927,7 +1927,7 @@ export default function Admin() {
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">The Treasure Path ({treasureConfig?.clues?.length || 0})</p>
                   <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                     {treasureConfig?.clues?.map((c: any, i: number) => (
-                      <div key={i} className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group overflow-hidden">
+                      <div key={`clue-path-${c.id || i}-${i}`} className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm relative group overflow-hidden">
                         <div className="absolute top-0 left-0 w-1 h-full bg-brand-primary" />
                         <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
@@ -2061,7 +2061,7 @@ export default function Admin() {
                         const isAiResponse = msg.sender === 'ai';
                         const isUserAiQuery = msg.isAiChat && msg.sender === 'user';
                         return (
-                          <div key={i} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                          <div key={`admin-msg-${msg.id || i}-${i}`} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[70%] p-3.5 rounded-2xl text-sm ${
                               msg.sender === 'admin' 
                                 ? 'bg-brand-primary text-white rounded-tr-none' 
@@ -2367,7 +2367,7 @@ export default function Admin() {
 
                         <div className="space-y-3">
                           {editingEventForm.rules.map((rule: string, rIdx: number) => (
-                            <div key={rIdx} className="flex gap-2 items-center">
+                            <div key={`evt-rule-${rIdx}`} className="flex gap-2 items-center">
                               <span className="text-xs font-mono font-bold text-text-muted shrink-0 bg-white w-6 h-6 rounded-full flex items-center justify-center border border-gray-200">{rIdx + 1}</span>
                               <input
                                 type="text"
@@ -2559,7 +2559,7 @@ export default function Admin() {
                             <div className="bg-red-50/50 border border-red-100/40 rounded-xl p-3 space-y-2 max-h-32 overflow-y-auto">
                               {post.reports && post.reports.length > 0 ? (
                                 post.reports.map((rep: any, idx: number) => (
-                                  <div key={idx} className="text-xs border-b border-red-100/20 last:border-0 pb-1.5 last:pb-0 font-sans">
+                                  <div key={`rep-item-${post.id || 'p'}-${idx}`} className="text-xs border-b border-red-100/20 last:border-0 pb-1.5 last:pb-0 font-sans">
                                     <div className="flex justify-between font-bold text-red-950 text-[10px]">
                                       <span>{rep.userName || 'Reporter'} ({rep.userEmail || 'N/A'})</span>
                                       <span className="font-mono font-medium text-gray-400">{rep.timestamp ? new Date(rep.timestamp).toLocaleDateString() : 'N/A'}</span>

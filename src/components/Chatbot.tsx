@@ -124,7 +124,7 @@ export default function Chatbot() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !user) return;
+    if (!message.trim()) return;
 
     const currentMessage = message.trim();
     setMessage('');
@@ -141,26 +141,37 @@ export default function Chatbot() {
       };
       setAiMessages(prev => [...prev.filter(m => m.id !== 'welcome'), optimisticUserMsg]);
 
-      // 1. Add user message to Firestore AI Chat History (non-blocking for speed)
-      addDoc(collection(db, 'support_messages'), {
-        userId: user.uid,
-        userName: profile?.name || user.displayName || 'User',
-        userEmail: user.email,
-        text: currentMessage,
-        sender: 'user',
-        timestamp: serverTimestamp(),
-        isRead: true, // Don't block admin queue
-        isAiChat: true
-      }).catch(error => {
-        console.error("Error saving user message to AI logs:", error);
-      });
+      // 1. Add user message to Firestore AI Chat History if logged in (non-blocking for speed)
+      if (user) {
+        addDoc(collection(db, 'support_messages'), {
+          userId: user.uid,
+          userName: profile?.name || user.displayName || 'User',
+          userEmail: user.email,
+          text: currentMessage,
+          sender: 'user',
+          timestamp: serverTimestamp(),
+          isRead: true, // Don't block admin queue
+          isAiChat: true
+        }).catch(error => {
+          console.error("Error saving user message to AI logs:", error);
+        });
+      }
 
-      // 2. Fetch response from Gemini
+      // 2. Build history for multi-turn context
+      const history = aiMessages
+        .filter(m => m.id !== 'welcome' && m.text)
+        .slice(-6)
+        .map(m => ({
+          role: m.sender === 'user' ? 'user' : 'model',
+          text: m.text
+        }));
+
+      // 3. Fetch response from Gemini
       try {
         const response = await fetch('/api/gemini/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: currentMessage }),
+          body: JSON.stringify({ message: currentMessage, history }),
         });
         
         if (!response.ok) {
@@ -181,22 +192,24 @@ export default function Chatbot() {
         };
         setAiMessages(prev => [...prev, optimisticAiMsg]);
 
-        // 3. Add AI response to Firestore (non-blocking so loading stops instantly)
-        addDoc(collection(db, 'support_messages'), {
-          userId: user.uid,
-          userName: 'AI Assistant',
-          userEmail: 'ai-bot@rasayan2026.com',
-          text: aiResponseText,
-          sender: 'ai',
-          timestamp: serverTimestamp(),
-          isRead: true,
-          isAiChat: true
-        }).catch(error => {
-          console.error("Error saving AI response:", error);
-        });
+        // 4. Add AI response to Firestore if logged in
+        if (user) {
+          addDoc(collection(db, 'support_messages'), {
+            userId: user.uid,
+            userName: 'AI Assistant',
+            userEmail: 'ai-bot@rasayan2026.com',
+            text: aiResponseText,
+            sender: 'ai',
+            timestamp: serverTimestamp(),
+            isRead: true,
+            isAiChat: true
+          }).catch(error => {
+            console.error("Error saving AI response:", error);
+          });
+        }
       } catch (error: any) {
         console.error("AI Error:", error);
-        const errMsg = `Error: ${error.message || "Failed to connect"}. Try switching to 'Admin Help'.`;
+        const errMsg = `Error: ${error.message || "Failed to connect"}. Try switching to 'Admin Chat'.`;
         
         // Optimistically add error message
         const optimisticErrorMsg = {
@@ -208,22 +221,38 @@ export default function Chatbot() {
         };
         setAiMessages(prev => [...prev, optimisticErrorMsg]);
 
-        addDoc(collection(db, 'support_messages'), {
-          userId: user.uid,
-          userName: 'AI Assistant',
-          userEmail: 'ai-bot@rasayan2026.com',
-          text: errMsg,
-          sender: 'ai',
-          timestamp: serverTimestamp(),
-          isRead: true,
-          isAiChat: true
-        }).catch(err => {
-          console.error("Error saving AI error response:", err);
-        });
+        if (user) {
+          addDoc(collection(db, 'support_messages'), {
+            userId: user.uid,
+            userName: 'AI Assistant',
+            userEmail: 'ai-bot@rasayan2026.com',
+            text: errMsg,
+            sender: 'ai',
+            timestamp: serverTimestamp(),
+            isRead: true,
+            isAiChat: true
+          }).catch(err => {
+            console.error("Error saving AI error response:", err);
+          });
+        }
       } finally {
         setLoading(false);
       }
     } else {
+      // Admin Support Mode requires login
+      if (!user) {
+        const notLoggedInMsg = {
+          id: 'opt_admin_guest_' + Date.now(),
+          text: "Please sign in or register to send direct support messages to our event coordinators.",
+          sender: 'admin',
+          timestamp: new Date(),
+          isAiChat: false
+        };
+        setAdminMessages(prev => [...prev, notLoggedInMsg]);
+        setLoading(false);
+        return;
+      }
+
       // Admin Support Mode (optimistic update)
       const optimisticUserMsg = {
         id: 'opt_admin_user_' + Date.now(),
@@ -329,9 +358,9 @@ export default function Chatbot() {
                   </div>
                 </div>
               ) : (
-                (mode === 'ai' ? aiMessages : adminMessages).map((msg) => (
+                (mode === 'ai' ? aiMessages : adminMessages).map((msg, idx) => (
                   <div 
-                    key={msg.id} 
+                    key={msg.id || `chat-msg-${idx}`} 
                     className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                   >
                     <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${

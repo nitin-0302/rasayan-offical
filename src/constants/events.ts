@@ -232,29 +232,6 @@ export const EVENTS: Event[] = [
     headPhone: '+91 98765 43220'
   },
   {
-    id: 'labellab',
-    name: 'Labellab (Label Designing)',
-    type: 'online',
-    category: 'Design',
-    description: 'Get ready to blend science with creativity! Labelab is an exciting label-designing competition where students create innovative, eye-catching, and scientifically accurate labels for chemical products. Show your artistic skills while communicating important information like safety symbols, compositions, and chemical details clearly. Whether it’s a lab chemical, cosmetic, or eco-friendly product, design a label that makes science safe and stylish!',
-    rules: [
-      'Submission Date: 15 December 2026, 12:00 pm.',
-      'Chemicals to Choose From: Conc. H2SO4, Conc. HNO3, Conc. HCl, Dil. NaOH, Bromine Water, Potassium Ferrocyanide, Potassium Ferricyanide, Potassium Dichromate, Sodium Nitrite, Ammonium Hydroxide, Phenolphthalein, Methyl Orange. Pick One chemical from the given list.',
-      'Add its name and correct chemical formula clearly.',
-      'Design must reflect the theme of the event.',
-      'You may include basic MSDS details (optional but appreciated).',
-      'Colour scheme - White background + Black text',
-      'Final label size should be 4 × 8 inches',
-      'Ensure your design is neat, original, and suitable to be used on our actual laboratory chemical bottles.'
-    ],
-    deadline: '15 December 2026',
-    winners: 3,
-    price: 40,
-    isTeam: false,
-    headName: 'Dr. Manish Pandey',
-    headPhone: '+91 98765 43221'
-  },
-  {
     id: 'sustain-a-meme',
     name: 'Sustain-a-meme (Memes making)',
     type: 'online',

@@ -228,7 +228,7 @@ export default function TreasureHunt() {
             </h3>
             <div className="max-h-60 overflow-y-auto space-y-2">
               {allProgress.map((p, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-white px-4 py-3 rounded-xl border border-gray-100">
+                <div key={`th-prog-${p.userId || p.teamName || idx}-${idx}`} className="flex justify-between items-center bg-white px-4 py-3 rounded-xl border border-gray-100">
                   <span className="font-bold text-brand-dark">{p.teamName}</span>
                   <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Ready</span>
                 </div>

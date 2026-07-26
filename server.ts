@@ -32,47 +32,75 @@ function getGenAI() {
 }
 
 function getFallbackResponse(userMessage: string): string {
-  const msg = (userMessage || "").toLowerCase();
+  const msg = (userMessage || "").toLowerCase().trim();
   
-  let reply: string;
-  if (msg.includes("register") || msg.includes("registration") || msg.includes("sign up") || msg.includes("apply") || msg.includes("join")) {
-    reply = "You can easily register for any event through our platform! Head to the **Events** or **Dashboard** section, select the game you want to join, fill in the required participant or team details, and submit your registration details to secure your spot.";
-  } else if (msg.includes("price") || msg.includes("fee") || msg.includes("cost") || msg.includes("how much") || msg.includes("payment") || msg.includes("amount")) {
-    reply = "Here are the registration fees for the Rasayan 2026 events:\n\n" +
-            "**On-Ground Events:**\n" +
-            "- 🧠 **Green Mind Battle (Quiz)**: ₹50 (Solo)\n" +
-            "- 🧩 **Mindscape 17 (Memory Challenge)**: ₹50 (Solo)\n" +
-            "- 🦈 **Elemental Sharks (Shark Tank)**: ₹150 (Group of up to 3)\n" +
-            "- ⏱️ **Tatva Trail (Minute to Win It)**: ₹250 (Group of 5)\n" +
-            "- 🔍 **Eco-forensics**: ₹150 (Group of up to 3)\n" +
-            "- 🗺️ **Srishti Rahasya (Treasure Hunt)**: ₹250 (Group of 5)\n" +
-            "- 🔀 **Atomic Shuffle**: ₹30 (Solo)\n" +
-            "- 🎟️ **Kismat (Housie)**: ₹20 (Solo)\n\n" +
-            "**Online/Digital Events:**\n" +
-            "- 🎨 **Doodleium (Doodling)**: ₹40 (Solo)\n" +
-            "- 📷 **Eco-vision (Photography)**: ₹40 (Solo)\n" +
-            "- 🎥 **Reel-iemental (Reels)**: ₹40 (Solo)\n" +
-            "- 🏷️ **Labellab (Label Designing)**: ₹40 (Solo)\n" +
-            "- 🤪 **Sustain-a-meme (Memes)**: ₹20 (Solo)";
-  } else if (msg.includes("date") || msg.includes("when") || msg.includes("time") || msg.includes("schedule")) {
-    reply = "Rasayan 2026 is scheduled to take place on **December 16th, 2026**. Make sure to register in advance to reserve your entry!";
-  } else if (msg.includes("venue") || msg.includes("where") || msg.includes("location") || msg.includes("college") || msg.includes("place")) {
-    reply = "The festival is hosted at the **K J Somaiya College of Science and Commerce** campus located in Vidyavihar, Mumbai.";
-  } else if (msg.includes("theme") || msg.includes("panchtatva")) {
-    reply = "The theme for Rasayan 2026 is **'Panchtatva'**, celebrating the five basic elements of nature: Earth, Water, Fire, Air, and Space. All fests, games, and competitions are designed around this beautiful theme!";
-  } else if (msg.includes("quiz") || msg.includes("mind battle") || msg.includes("green mind")) {
-    reply = "The **Green Mind Battle** is our premium Chemistry Quiz event! It is a solo competition with a nominal fee of ₹50. It features multiple exciting rounds testing your scientific wit.";
-  } else if (msg.includes("treasure") || msg.includes("hunt") || msg.includes("srishti rahasya")) {
-    reply = "The **Srishti Rahasya** is our popular Chemistry Treasure Hunt! Designed for a team of 5, the registration fee is ₹250 per team. Participants solve chemistry riddles to navigate around the campus!";
-  } else if (msg.includes("help") || msg.includes("admin") || msg.includes("human") || msg.includes("contact") || msg.includes("support") || msg.includes("talk")) {
-    reply = "If you have a specific inquiry or need direct assistance, you can switch the chatbot to the **'Admin Help'** tab right at the top of this window. This connects you directly with our student coordinator helpdesk!";
-  } else if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greetings")) {
-    reply = "Hello there! I am your Rasayan 2026 Assistant. How can I assist you with the chemistry festival today?";
-  } else {
-    reply = "I'm the Rasayan 2026 Assistant! I can help you with event details, registrations, fees, rules, schedule, and venue of the Chemistry Festival. Ask me about our theme **'Panchtatva'**, any of our 13 events, or toggle to **'Admin Help'** to contact a coordinator.";
+  // List of valid fest-related keywords
+  const festKeywords = [
+    "rasayan", "fest", "event", "panchtatva", "quiz", "mind battle", "mindscape", "shark", 
+    "elemental", "tatva", "trail", "forensics", "treasure", "hunt", "srishti", "rahasya", 
+    "shuffle", "atomic", "housie", "kismat", "doodle", "doodleium", "vision", "eco", 
+    "reel", "reel-iemental", "meme", "sustain", "register", "price", 
+    "fee", "cost", "date", "when", "venue", "where", "location", "college", "somaiya", 
+    "admin", "help", "support", "contact", "human", "hi", "hello", "hey", "greetings"
+  ];
+
+  const isFestQuery = festKeywords.some(keyword => msg.includes(keyword));
+
+  if (!isFestQuery) {
+    return "I am the Rasayan 2026 AI Assistant, strictly sandboxed to assist with queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!";
   }
 
-  return reply;
+  if (msg.includes("register") || msg.includes("registration") || msg.includes("sign up") || msg.includes("apply") || msg.includes("join")) {
+    return "You can easily register for any event through our website! Navigate to the **Events** or **Register** section, choose the events you want to participate in, fill out your team or individual details, and submit. You will receive an instant confirmation email with your unique Registration ID.";
+  } 
+  
+  if (msg.includes("price") || msg.includes("fee") || msg.includes("cost") || msg.includes("how much") || msg.includes("payment") || msg.includes("amount")) {
+    return "Here are the official registration fees for Rasayan 2026 events:\n\n" +
+           "**On-Ground Events:**\n" +
+           "- 🧠 **Green Mind Battle (Quiz)**: ₹50 (Solo)\n" +
+           "- 🧩 **Mindscape 17 (Memory Challenge)**: ₹50 (Solo)\n" +
+           "- 🦈 **Elemental Sharks (Shark Tank)**: ₹150 (Group of 1-3)\n" +
+           "- ⏱️ **Tatva Trail (Minute to Win It)**: ₹250 (Group of 5)\n" +
+           "- 🔍 **Eco-forensics**: ₹150 (Group of 1-3)\n" +
+           "- 🗺️ **Srishti Rahasya (Treasure Hunt)**: ₹250 (Group of 5)\n" +
+           "- 🔀 **Atomic Shuffle**: ₹30 (Solo)\n" +
+           "- 🎟️ **Kismat (Housie)**: ₹20 (Solo)\n\n" +
+           "**Online Events:**\n" +
+           "- 🎨 **Doodleium (Doodling)**: ₹40 (Solo)\n" +
+           "- 📷 **Eco-vision (Photography)**: ₹40 (Solo)\n" +
+           "- 🎥 **Reel-iemental (Reels)**: ₹40 (Solo)\n" +
+           "- 🤪 **Sustain-a-meme (Memes)**: ₹20 (Solo)";
+  } 
+  
+  if (msg.includes("date") || msg.includes("when") || msg.includes("time") || msg.includes("schedule")) {
+    return "Rasayan 2026 will be held on **December 16th, 2026**. Online event submissions (Doodleium, Eco-vision, Reel-iemental, Sustain-a-meme) close on **December 15th, 2026**.";
+  } 
+  
+  if (msg.includes("venue") || msg.includes("where") || msg.includes("location") || msg.includes("college") || msg.includes("place") || msg.includes("somaiya")) {
+    return "The festival is hosted at the **K J Somaiya College of Science and Commerce** campus located in Vidyavihar, Mumbai.";
+  } 
+  
+  if (msg.includes("theme") || msg.includes("panchtatva")) {
+    return "The theme for Rasayan 2026 is **'Panchtatva'**, celebrating the five basic elements of nature: Earth, Water, Fire, Air, and Space.";
+  } 
+  
+  if (msg.includes("quiz") || msg.includes("mind battle") || msg.includes("green mind")) {
+    return "The **Green Mind Battle** is our on-ground Chemistry Quiz! It is a solo competition (₹50 fee) conducted on the Kahoot app testing environmental and chemistry knowledge.";
+  } 
+  
+  if (msg.includes("treasure") || msg.includes("hunt") || msg.includes("srishti rahasya")) {
+    return "The **Srishti Rahasya** is our campus Treasure Hunt! Teams of 5 (₹250 per team) solve chemistry riddles to navigate clues around the campus.";
+  } 
+  
+  if (msg.includes("help") || msg.includes("admin") || msg.includes("human") || msg.includes("contact") || msg.includes("support") || msg.includes("talk")) {
+    return "If you need direct assistance from a coordinator, please switch to the **'Admin Chat'** mode at the top of this chat window to message our team directly!";
+  } 
+  
+  if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greetings")) {
+    return "Hello! I am your Rasayan 2026 Assistant. How can I assist you with our Chemistry Festival events, registrations, schedule, or fees today?";
+  } 
+  
+  return "I am the Rasayan 2026 Assistant! I can answer questions about our 12 Chemistry Fest events, registration details, fees, schedule (Dec 16, 2026), venue, or theme 'Panchtatva'. Ask me anything about the festival!";
 }
 
 async function createServer() {
@@ -90,17 +118,67 @@ async function createServer() {
   // Global map to track active downloads to avoid duplicate simultaneous downloads for the same file
   const activeDownloads = new Map<string, Promise<string>>();
 
+  // Function to ensure default videos are pre-cached in background on server start
+  const preCacheVideo = (fileId: string) => {
+    const cachePath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
+    const tempPath = path.join(process.cwd(), `video_cache_${fileId}.tmp`);
+    if (fs.existsSync(cachePath) || activeDownloads.has(fileId)) return;
+
+    const googleUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+    const downloadPromise = new Promise<string>((resolve, reject) => {
+      console.log(`Pre-caching banner video in background: ${fileId}`);
+      const fileStream = fs.createWriteStream(tempPath);
+      const download = (url: string) => {
+        https.get(url, (googleRes) => {
+          if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
+            download(googleRes.headers.location);
+            return;
+          }
+          if (googleRes.statusCode !== 200) {
+            fileStream.close();
+            try { fs.unlinkSync(tempPath); } catch (e) { console.warn("Unlink error:", e); }
+            reject(new Error(`Pre-cache failed status: ${googleRes.statusCode}`));
+            return;
+          }
+          googleRes.pipe(fileStream);
+          fileStream.on("finish", () => {
+            fileStream.close();
+            try {
+              fs.renameSync(tempPath, cachePath);
+              console.log(`Pre-cache complete for video ${fileId}`);
+              resolve(cachePath);
+            } catch (err) { reject(err); }
+          });
+        }).on("error", (err) => {
+          fileStream.close();
+          try { fs.unlinkSync(tempPath); } catch (e) { console.warn("Unlink error:", e); }
+          reject(err);
+        });
+      };
+      download(googleUrl);
+    });
+
+    activeDownloads.set(fileId, downloadPromise);
+    downloadPromise.catch(() => activeDownloads.delete(fileId));
+  };
+
+  // Pre-cache primary video assets
+  preCacheVideo("1QePHrtCffJD4oREs6rvtPvS9-J2BYJe_");
+  preCacheVideo("1K8I6-RjaWRO9s36OP4eHryrBzXa8LLkH");
+
   app.get("/api/video-proxy", (req, res) => {
-    const fileId = req.query.id as string || "1K8I6-RjaWRO9s36OP4eHryrBzXa8LLkH";
+    const fileId = req.query.id as string || "1QePHrtCffJD4oREs6rvtPvS9-J2BYJe_";
     const cachePath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
     const tempPath = path.join(process.cwd(), `video_cache_${fileId}.tmp`);
 
-    // If the complete cached file exists, serve it directly
+    // If the complete cached file exists, serve it directly with strong browser caching
     if (fs.existsSync(cachePath)) {
       return res.sendFile(cachePath, {
+        maxAge: "30d",
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Content-Type": "video/mp4",
+          "Cache-Control": "public, max-age=2592000, immutable"
         }
       });
     }
@@ -207,7 +285,7 @@ async function createServer() {
   });
 
   app.post("/api/gemini/chat", async (req, res) => {
-    const { message } = req.body;
+    const { message, history } = req.body;
     
     // Check if key is available
     if (!process.env.GEMINI_API_KEY) {
@@ -218,22 +296,79 @@ async function createServer() {
     
     try {
       const ai = getGenAI();
+
+      const SYSTEM_INSTRUCTION = `You are the official AI Assistant for Rasayan 2026, the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai.
+
+CRITICAL SANDBOX RULE (STRICT MANDATE):
+You are STRICTLY RESTRICTED to ONLY answering queries related to Rasayan 2026, its theme ('Panchtatva'), its 13 events, registration process, fees, schedule, venue, rules, and admin support.
+If the user asks about ANY UNRELATED TOPIC (such as general programming, math homework, general science, news, sports, recipes, politics, weather, personal advice, or off-topic chatter), YOU MUST DECLINE IMMEDIATELY WITH THIS EXACT PHRASE:
+"I am the Rasayan 2026 AI Assistant, strictly sandboxed to assist with queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!"
+
+OFFICIAL FESTIVAL INFORMATION:
+- Event Name: Rasayan 2026 (Annual Chemistry Festival)
+- Organizer: K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai
+- Theme: "Panchtatva" (Earth, Water, Fire, Air, Space)
+- Festival Date: December 16, 2026
+- Venue: K J Somaiya College of Science and Commerce campus, Vidyavihar, Mumbai
+
+OFFICIAL EVENTS & GAMES (TOTAL 12 EVENTS):
+1. Green Mind Battle (Quiz): ₹50 (Solo). On-ground Kahoot quiz testing environmental and chemistry knowledge.
+2. Mindscape 17 (Memory Challenge): ₹50 (Solo). 2 mins to memorize 17 sustainability principles.
+3. Elemental Sharks (Shark Tank): ₹150 (Group of 1 to 3). Pitch sustainable chemistry idea/prototype (5-8 mins).
+4. Tatva Trail (Minute to Win It): ₹250 (Group of 5). Fast-paced 1-minute elemental team tasks.
+5. Eco-forensics: ₹150 (Group of 1 to 3). Solve eco-crime case with chemical evidence.
+6. Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5). Solve chemistry riddles to hunt treasure around campus.
+7. Atomic Shuffle: ₹30 (Solo). Dance/movement to music, form groups equal to announced atomic number.
+8. Kismat (Housie): ₹20 (Solo). Chemistry atomic numbers housie game.
+9. Doodleium (Doodling): ₹40 (Solo, Online). Digital or handmade doodle on Panchtatva/Chemistry. Deadline: Dec 15, 2026, 12:00 PM.
+10. Eco-vision (Photography): ₹40 (Solo, Online). High-res chemistry in nature photo + description. Deadline: Dec 15, 2026, 12:00 PM.
+11. Reel-iemental (Reels): ₹40 (Solo, Online). 10-30 sec creative video reel on Panchtatva/Chemistry. Deadline: Dec 15, 2026, 12:00 AM.
+12. Sustain-a-meme (Memes): ₹20 (Solo, Online). Chemistry & sustainability memes. Deadline: Dec 15, 2026, 12:00 AM.
+
+REGISTRATION DETAILS:
+Participants can register directly through the website under the "Events" or "Register" tabs. An email with a unique Registration ID will be sent upon registration.
+
+HUMAN ADMIN ASSISTANCE:
+If the user wants to speak with a human student coordinator or needs custom assistance, tell them: "You can switch to 'Admin Chat' at the top of this chatbot window to send a direct message to our coordinator team."
+
+FORMATTING GUIDELINES:
+Keep answers concise, clear, polite, and well-structured using bullet points and **bold** text. Do NOT use raw code blocks or markdown code syntax.`;
+
+      // Construct contents array with history if provided
+      const formattedContents: any[] = [];
+      if (Array.isArray(history) && history.length > 0) {
+        for (const item of history) {
+          if (item.text && (item.role === 'user' || item.role === 'model')) {
+            formattedContents.push({
+              role: item.role,
+              parts: [{ text: item.text }]
+            });
+          }
+        }
+      }
+      if (formattedContents.length === 0 || formattedContents[formattedContents.length - 1].role !== 'user') {
+        formattedContents.push({
+          role: 'user',
+          parts: [{ text: message || "Hello" }]
+        });
+      }
+
       let response;
       try {
         response = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite",
-          contents: message || "Hello",
+          model: "gemini-3.6-flash",
+          contents: formattedContents,
           config: {
-            systemInstruction: "You are the Rasayan 2026 Assistant. Rasayan is the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce. This year's theme is 'Panchtatva'. You help users with event information, registration queries, and general fest details.\n\nHere are the official event/game prices for registration:\n- Green Mind Battle (Quiz): ₹50 (Solo)\n- Mindscape 17 (Memory Challenge): ₹50 (Solo)\n- Elemental Sharks (Shark Tank): ₹150 (Group up to 3)\n- Tatva Trail (Minute to Win It): ₹250 (Group of 5)\n- Eco-forensics: ₹150 (Group up to 3)\n- Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5)\n- Atomic Shuffle: ₹30 (Solo)\n- Kismat (Housie): ₹20 (Solo)\n- Doodleium (Doodling): ₹40 (Solo, Online)\n- Eco-vision (Photography): ₹40 (Solo, Online)\n- Reel-iemental (Reels): ₹40 (Solo, Online)\n- Labellab (Label Designing): ₹40 (Solo, Online)\n- Sustain-a-meme (Memes): ₹20 (Solo, Online)\n\nIf you don't know something, be honest. Keep replies concise, clean, and friendly. Avoid using raw markdown symbols for formatting that look like code blocks, but bold text using **bold** is completely fine. If the user wants to talk to a human admin, tell them they can switch to 'Admin Chat' mode in the chatbot.",
+            systemInstruction: SYSTEM_INSTRUCTION,
           },
         });
-      } catch (liteError: any) {
-        console.warn("gemini-3.1-flash-lite failed, trying gemini-3.5-flash fallback:", liteError);
+      } catch (primaryError: any) {
+        console.warn("gemini-3.6-flash failed, trying gemini-3.1-flash-lite fallback:", primaryError);
         response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: message || "Hello",
+          model: "gemini-3.1-flash-lite",
+          contents: formattedContents,
           config: {
-            systemInstruction: "You are the Rasayan 2026 Assistant. Rasayan is the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce. This year's theme is 'Panchtatva'. You help users with event information, registration queries, and general fest details.\n\nHere are the official event/game prices for registration:\n- Green Mind Battle (Quiz): ₹50 (Solo)\n- Mindscape 17 (Memory Challenge): ₹50 (Solo)\n- Elemental Sharks (Shark Tank): ₹150 (Group up to 3)\n- Tatva Trail (Minute to Win It): ₹250 (Group of 5)\n- Eco-forensics: ₹150 (Group up to 3)\n- Srishti Rahasya (Treasure Hunt): ₹250 (Group of 5)\n- Atomic Shuffle: ₹30 (Solo)\n- Kismat (Housie): ₹20 (Solo)\n- Doodleium (Doodling): ₹40 (Solo, Online)\n- Eco-vision (Photography): ₹40 (Solo, Online)\n- Reel-iemental (Reels): ₹40 (Solo, Online)\n- Labellab (Label Designing): ₹40 (Solo, Online)\n- Sustain-a-meme (Memes): ₹20 (Solo, Online)\n\nIf you don't know something, be honest. Keep replies concise, clean, and friendly. Avoid using raw markdown symbols for formatting that look like code blocks, but bold text using **bold** is completely fine. If the user wants to talk to a human admin, tell them they can switch to 'Admin Chat' mode in the chatbot.",
+            systemInstruction: SYSTEM_INSTRUCTION,
           },
         });
       }
