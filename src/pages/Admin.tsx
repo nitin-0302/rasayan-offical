@@ -14,7 +14,7 @@ import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
 export default function Admin() {
   const { isAdmin, isCoAdmin, loading: authLoading, googleToken, login } = useAuth();
-  const { events, updateEvent, addEvent, deleteEvent } = useEvents();
+  const { events, updateEvent, addEvent, deleteEvent, resetEventsToDefault } = useEvents();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -2378,14 +2378,32 @@ export default function Admin() {
                   <h3 className="text-2xl font-serif text-brand-dark">Event Pricing & Details Control</h3>
                   <p className="text-xs text-text-muted mt-1">Select any event below to adjust pricing, descriptions, team constraints, or add/delete competitions.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {!isReadOnly && (
-                    <button
-                      onClick={handleCreateNewEvent}
-                      className="text-xs bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5"
-                    >
-                      <Plus className="w-4 h-4" /> Add Competition
-                    </button>
+                    <>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm("Are you sure you want to reset all competitions back to the official 12 Panchtatva events? Any custom events created will be removed and standard official defaults will be restored.")) {
+                            try {
+                              await resetEventsToDefault();
+                              setEventSaveSuccess("Successfully restored official 12 Panchtatva competitions!");
+                            } catch (err: any) {
+                              setEventSaveError("Failed to reset events: " + err.message);
+                            }
+                          }
+                        }}
+                        className="text-xs bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="Restore original 12 Panchtatva events"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Reset to Official 12 Events
+                      </button>
+                      <button
+                        onClick={handleCreateNewEvent}
+                        className="text-xs bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" /> Add Competition
+                      </button>
+                    </>
                   )}
                   <div className="text-xs text-brand-primary font-bold bg-brand-soft px-4 py-2.5 rounded-xl border border-brand-primary/10">
                     {events.length} Live Competitions

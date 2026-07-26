@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import os from "os";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import cors from "cors";
@@ -10,7 +11,7 @@ import fs from "fs";
 
 dotenv.config();
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 
 let aiClient: GoogleGenAI | null = null;
 
@@ -117,48 +118,72 @@ async function createServer() {
   // Global map to track active downloads to avoid duplicate simultaneous downloads for the same file
   const activeDownloads = new Map<string, Promise<string>>();
 
+  const getCachePaths = (fileId: string) => {
+    // Check if process.cwd() has cached file, or use tmpdir for serverless writes
+    const localCwdPath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
+    if (fs.existsSync(localCwdPath)) {
+      return { cachePath: localCwdPath, tempPath: localCwdPath };
+    }
+    const cacheDir = os.tmpdir();
+    return {
+      cachePath: path.join(cacheDir, `video_cache_${fileId}.mp4`),
+      tempPath: path.join(cacheDir, `video_cache_${fileId}.tmp`),
+    };
+  };
+
   // Function to ensure default videos are pre-cached in background on server start
   const preCacheVideo = (fileId: string) => {
-    const cachePath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
-    const tempPath = path.join(process.cwd(), `video_cache_${fileId}.tmp`);
-    if (fs.existsSync(cachePath) || activeDownloads.has(fileId)) return;
+    try {
+      const { cachePath, tempPath } = getCachePaths(fileId);
+      if (fs.existsSync(cachePath) || activeDownloads.has(fileId)) return;
 
-    const googleUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
-    const downloadPromise = new Promise<string>((resolve, reject) => {
-      console.log(`Pre-caching banner video in background: ${fileId}`);
-      const fileStream = fs.createWriteStream(tempPath);
-      const download = (url: string) => {
-        https.get(url, (googleRes) => {
-          if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
-            download(googleRes.headers.location);
-            return;
-          }
-          if (googleRes.statusCode !== 200) {
+      const googleUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+      const downloadPromise = new Promise<string>((resolve, reject) => {
+        console.log(`Pre-caching banner video in background: ${fileId}`);
+        let fileStream: fs.WriteStream;
+        try {
+          fileStream = fs.createWriteStream(tempPath);
+        } catch (e) {
+          console.warn("Could not create temp file stream:", e);
+          reject(e);
+          return;
+        }
+
+        const download = (url: string) => {
+          https.get(url, (googleRes) => {
+            if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
+              download(googleRes.headers.location);
+              return;
+            }
+            if (googleRes.statusCode !== 200) {
+              fileStream.close();
+              try { fs.unlinkSync(tempPath); } catch (e) { console.warn("Unlink error:", e); }
+              reject(new Error(`Pre-cache failed status: ${googleRes.statusCode}`));
+              return;
+            }
+            googleRes.pipe(fileStream);
+            fileStream.on("finish", () => {
+              fileStream.close();
+              try {
+                fs.renameSync(tempPath, cachePath);
+                console.log(`Pre-cache complete for video ${fileId}`);
+                resolve(cachePath);
+              } catch (err) { reject(err); }
+            });
+          }).on("error", (err) => {
             fileStream.close();
             try { fs.unlinkSync(tempPath); } catch (e) { console.warn("Unlink error:", e); }
-            reject(new Error(`Pre-cache failed status: ${googleRes.statusCode}`));
-            return;
-          }
-          googleRes.pipe(fileStream);
-          fileStream.on("finish", () => {
-            fileStream.close();
-            try {
-              fs.renameSync(tempPath, cachePath);
-              console.log(`Pre-cache complete for video ${fileId}`);
-              resolve(cachePath);
-            } catch (err) { reject(err); }
+            reject(err);
           });
-        }).on("error", (err) => {
-          fileStream.close();
-          try { fs.unlinkSync(tempPath); } catch (e) { console.warn("Unlink error:", e); }
-          reject(err);
-        });
-      };
-      download(googleUrl);
-    });
+        };
+        download(googleUrl);
+      });
 
-    activeDownloads.set(fileId, downloadPromise);
-    downloadPromise.catch(() => activeDownloads.delete(fileId));
+      activeDownloads.set(fileId, downloadPromise);
+      downloadPromise.catch(() => activeDownloads.delete(fileId));
+    } catch (err) {
+      console.warn("Pre-cache initialization warning:", err);
+    }
   };
 
   // Pre-cache primary video assets
@@ -167,8 +192,7 @@ async function createServer() {
 
   app.get("/api/video-proxy", (req, res) => {
     const fileId = req.query.id as string || "1QePHrtCffJD4oREs6rvtPvS9-J2BYJe_";
-    const cachePath = path.join(process.cwd(), `video_cache_${fileId}.mp4`);
-    const tempPath = path.join(process.cwd(), `video_cache_${fileId}.tmp`);
+    const { cachePath, tempPath } = getCachePaths(fileId);
 
     // If the complete cached file exists, serve it directly with strong browser caching
     if (fs.existsSync(cachePath)) {
@@ -188,8 +212,15 @@ async function createServer() {
     if (!activeDownloads.has(fileId)) {
       const downloadPromise = new Promise<string>((resolve, reject) => {
         console.log(`Starting background cache download for video ID: ${fileId}`);
-        const fileStream = fs.createWriteStream(tempPath);
-        
+        let fileStream: fs.WriteStream | null = null;
+        try {
+          fileStream = fs.createWriteStream(tempPath);
+        } catch (err) {
+          console.warn("Cannot create temp file for video cache:", err);
+          reject(err);
+          return;
+        }
+
         const download = (url: string) => {
           https.get(url, (googleRes) => {
             if (googleRes.statusCode && googleRes.statusCode >= 300 && googleRes.statusCode < 400 && googleRes.headers.location) {
@@ -197,27 +228,29 @@ async function createServer() {
               return;
             }
             if (googleRes.statusCode !== 200) {
-              fileStream.close();
-              try { fs.unlinkSync(tempPath); } catch { /* ignore if already unlinked */ }
+              if (fileStream) fileStream.close();
+              try { fs.unlinkSync(tempPath); } catch { /* ignore if unlinked */ }
               reject(new Error(`Failed to download from Google Drive, status: ${googleRes.statusCode}`));
               return;
             }
 
-            googleRes.pipe(fileStream);
+            if (fileStream) googleRes.pipe(fileStream);
 
-            fileStream.on("finish", () => {
-              fileStream.close();
-              try {
-                fs.renameSync(tempPath, cachePath);
-                console.log(`Successfully cached video ${fileId} locally!`);
-                resolve(cachePath);
-              } catch (err) {
-                reject(err);
-              }
-            });
+            if (fileStream) {
+              fileStream.on("finish", () => {
+                fileStream?.close();
+                try {
+                  fs.renameSync(tempPath, cachePath);
+                  console.log(`Successfully cached video ${fileId} locally!`);
+                  resolve(cachePath);
+                } catch (err) {
+                  reject(err);
+                }
+              });
+            }
           }).on("error", (err) => {
-            fileStream.close();
-            try { fs.unlinkSync(tempPath); } catch { /* ignore if already unlinked */ }
+            if (fileStream) fileStream.close();
+            try { fs.unlinkSync(tempPath); } catch { /* ignore */ }
             reject(err);
           });
         };
@@ -227,7 +260,7 @@ async function createServer() {
 
       activeDownloads.set(fileId, downloadPromise);
       downloadPromise.catch((err) => {
-        console.error(`Background download failed for ${fileId}:`, err);
+        console.warn(`Background download failed for ${fileId}:`, err);
         activeDownloads.delete(fileId);
       });
     }
@@ -615,19 +648,30 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
   });
 
   if (!isProduction) {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } catch (viteErr) {
+      console.warn("Vite middleware omitted:", viteErr);
+    }
   } else {
-    // In production (Vercel or build), serve static files
+    // In production (Vercel or standalone build), serve static files if dist exists
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        const indexPath = path.join(distPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send("Application index.html not found.");
+        }
+      });
+    }
   }
 
   return app;

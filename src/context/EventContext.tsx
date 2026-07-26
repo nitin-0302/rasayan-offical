@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { EVENTS, Event } from '../constants/events';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
@@ -10,6 +10,7 @@ interface EventContextType {
   updateEvent: (eventId: string, updatedFields: Partial<Event>) => Promise<void>;
   addEvent: (newEvent: Event) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
+  resetEventsToDefault: () => Promise<void>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -92,8 +93,32 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetEventsToDefault = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'events'));
+      const batch = writeBatch(db);
+      
+      // Delete existing documents
+      snapshot.forEach((d) => {
+        batch.delete(doc(db, 'events', d.id));
+      });
+      await batch.commit();
+
+      // Seed official 12 EVENTS
+      const seedBatch = writeBatch(db);
+      for (const evt of EVENTS) {
+        seedBatch.set(doc(db, 'events', evt.id), evt);
+      }
+      await seedBatch.commit();
+      setEvents(EVENTS);
+    } catch (err) {
+      console.error("Error resetting events to default:", err);
+      handleFirestoreError(err, OperationType.WRITE, 'events');
+    }
+  };
+
   return (
-    <EventContext.Provider value={{ events, loading, updateEvent, addEvent, deleteEvent }}>
+    <EventContext.Provider value={{ events, loading, updateEvent, addEvent, deleteEvent, resetEventsToDefault }}>
       {children}
     </EventContext.Provider>
   );
