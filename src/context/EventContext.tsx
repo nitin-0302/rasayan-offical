@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { EVENTS, Event } from '../constants/events';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
@@ -8,6 +8,8 @@ interface EventContextType {
   events: Event[];
   loading: boolean;
   updateEvent: (eventId: string, updatedFields: Partial<Event>) => Promise<void>;
+  addEvent: (newEvent: Event) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -39,29 +41,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
           loaded.push({ id: docSnap.id, ...docSnap.data() } as Event);
         });
 
-        // Check if any events defined in compiled constants are missing in the Firestore loaded events
-        const missingEvents = EVENTS.filter(staticEvt => !loaded.some(e => e.id === staticEvt.id));
-        if (missingEvents.length > 0) {
-          console.log(`Detecting ${missingEvents.length} deleted/missing events. Restoring them to Firestore...`);
-          // Load them immediately into UI context so they display right away
-          loaded.push(...missingEvents);
-          
-          // Asynchronously restore each missing event to the Firestore database
-          for (const missingEvt of missingEvents) {
-            setDoc(doc(db, 'events', missingEvt.id), missingEvt).catch(err => {
-              console.error(`Failed to restore event ${missingEvt.id}:`, err);
-            });
-          }
-        }
-        
-        // Sort loaded events to match the sequence of categories / IDs in original EVENTS array
+        // Sort loaded events by category or name
         const sorted = loaded.sort((a, b) => {
           const indexA = EVENTS.findIndex(e => e.id === a.id);
           const indexB = EVENTS.findIndex(e => e.id === b.id);
           if (indexA !== -1 && indexB !== -1) {
             return indexA - indexB;
           }
-          return a.name.localeCompare(b.name);
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return (a.name || '').localeCompare(b.name || '');
         });
         
         setEvents(sorted);
@@ -85,8 +74,26 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addEvent = async (newEvent: Event) => {
+    try {
+      await setDoc(doc(db, 'events', newEvent.id), newEvent);
+    } catch (err) {
+      console.error("Error adding new event:", err);
+      handleFirestoreError(err, OperationType.CREATE, `events/${newEvent.id}`);
+    }
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      handleFirestoreError(err, OperationType.DELETE, `events/${eventId}`);
+    }
+  };
+
   return (
-    <EventContext.Provider value={{ events, loading, updateEvent }}>
+    <EventContext.Provider value={{ events, loading, updateEvent, addEvent, deleteEvent }}>
       {children}
     </EventContext.Provider>
   );
