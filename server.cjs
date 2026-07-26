@@ -62,6 +62,32 @@ function getGenAI() {
 }
 function getFallbackResponse(userMessage) {
   const msg = (userMessage || "").toLowerCase().trim();
+  const techKeywords = [
+    "bug",
+    "error",
+    "failed",
+    "fail",
+    "issue",
+    "problem",
+    "payment",
+    "transaction",
+    "login",
+    "password",
+    "reset",
+    "otp",
+    "account",
+    "unable",
+    "crash",
+    "not working",
+    "technical",
+    "glitch",
+    "broken",
+    "stuck",
+    "refund"
+  ];
+  if (techKeywords.some((kw) => msg.includes(kw))) {
+    return "For technical issues, payment errors, or account help, please switch to the **'Admin Help'** tab at the top of this chat window to message our technical support team directly.";
+  }
   const festKeywords = [
     "rasayan",
     "fest",
@@ -92,7 +118,10 @@ function getFallbackResponse(userMessage) {
     "meme",
     "sustain",
     "register",
+    "registration",
     "price",
+    "rule",
+    "rules",
     "fee",
     "cost",
     "date",
@@ -102,19 +131,21 @@ function getFallbackResponse(userMessage) {
     "location",
     "college",
     "somaiya",
-    "admin",
-    "help",
-    "support",
-    "contact",
-    "human",
     "hi",
     "hello",
     "hey",
-    "greetings"
+    "greetings",
+    "theme",
+    "time",
+    "schedule",
+    "help",
+    "admin",
+    "contact",
+    "support"
   ];
   const isFestQuery = festKeywords.some((keyword) => msg.includes(keyword));
   if (!isFestQuery) {
-    return "I am the Rasayan 2026 AI Assistant, strictly sandboxed to assist with queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!";
+    return "I am the Rasayan 2026 AI Assistant, strictly restricted to answering queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!";
   }
   if (msg.includes("register") || msg.includes("registration") || msg.includes("sign up") || msg.includes("apply") || msg.includes("join")) {
     return "You can easily register for any event through our website! Navigate to the **Events** or **Register** section, choose the events you want to participate in, fill out your team or individual details, and submit. You will receive an instant confirmation email with your unique Registration ID.";
@@ -137,13 +168,13 @@ function getFallbackResponse(userMessage) {
   if (msg.includes("treasure") || msg.includes("hunt") || msg.includes("srishti rahasya")) {
     return "The **Srishti Rahasya** is our campus Treasure Hunt! Teams of 5 (\u20B9250 per team) solve chemistry riddles to navigate clues around the campus.";
   }
-  if (msg.includes("help") || msg.includes("admin") || msg.includes("human") || msg.includes("contact") || msg.includes("support") || msg.includes("talk")) {
-    return "If you need direct assistance from a coordinator, please switch to the **'Admin Chat'** mode at the top of this chat window to message our team directly!";
+  if (msg.includes("help") || msg.includes("admin") || msg.includes("contact") || msg.includes("support")) {
+    return "If you need direct assistance from a coordinator, please switch to the **'Admin Help'** tab at the top of this chat window to message our team directly!";
   }
   if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greetings")) {
     return "Hello! I am your Rasayan 2026 Assistant. How can I assist you with our Chemistry Festival events, registrations, schedule, or fees today?";
   }
-  return "I am the Rasayan 2026 Assistant! I can answer questions about our 12 Chemistry Fest events, registration details, fees, schedule (Dec 16, 2026), venue, or theme 'Panchtatva'. Ask me anything about the festival!";
+  return "I am the Rasayan 2026 AI Assistant! I can answer questions about our 12 Chemistry Fest events, registration details, fees, schedule (Dec 16, 2026), venue, or theme 'Panchtatva'. Ask me anything about the festival!";
 }
 async function createServer() {
   const app = (0, import_express.default)();
@@ -313,10 +344,12 @@ async function createServer() {
       const ai = getGenAI();
       const SYSTEM_INSTRUCTION = `You are the official AI Assistant for Rasayan 2026, the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai.
 
-CRITICAL SANDBOX RULE (STRICT MANDATE):
-You are STRICTLY RESTRICTED to ONLY answering queries related to Rasayan 2026, its theme ('Panchtatva'), its 13 events, registration process, fees, schedule, venue, rules, and admin support.
-If the user asks about ANY UNRELATED TOPIC (such as general programming, math homework, general science, news, sports, recipes, politics, weather, personal advice, or off-topic chatter), YOU MUST DECLINE IMMEDIATELY WITH THIS EXACT PHRASE:
-"I am the Rasayan 2026 AI Assistant, strictly sandboxed to assist with queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!"
+CRITICAL SCOPE & ROUTING MANDATES:
+1. RESTRICTED SCOPE: You are STRICTLY RESTRICTED to ONLY answering queries related to Rasayan 2026, its theme ('Panchtatva'), its 12 official events, registration process, fees, schedule, venue, rules, and event details.
+2. OUT-OF-SCOPE PROMPTS: If the user asks about ANY UNRELATED TOPIC (e.g. general programming, math homework, general science, news, sports, recipes, politics, weather, personal advice, or off-topic chatter), YOU MUST DECLINE POLITELY WITH THIS EXACT PHRASE:
+"I am the Rasayan 2026 AI Assistant, strictly restricted to answering queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!"
+3. TECHNICAL ISSUES & ADMIN HELP ROUTING: If the user asks about ANY technical issues, website glitches, bugs, payment errors, login/account issues, password resets, or needs direct human support, YOU MUST ROUTE THEM DIRECTLY TO ADMIN HELP WITH THIS EXACT PHRASE:
+"For technical issues, payment errors, or account help, please switch to the **'Admin Help'** tab at the top of this chat window to message our technical support team directly."
 
 OFFICIAL FESTIVAL INFORMATION:
 - Event Name: Rasayan 2026 (Annual Chemistry Festival)
@@ -343,7 +376,7 @@ REGISTRATION DETAILS:
 Participants can register directly through the website under the "Events" or "Register" tabs. An email with a unique Registration ID will be sent upon registration.
 
 HUMAN ADMIN ASSISTANCE:
-If the user wants to speak with a human student coordinator or needs custom assistance, tell them: "You can switch to 'Admin Chat' at the top of this chatbot window to send a direct message to our coordinator team."
+If the user asks to talk to human event coordinators or needs technical help, tell them: "Please switch to the **'Admin Help'** tab at the top of this chatbot window to send a direct message to our support team."
 
 FORMATTING GUIDELINES:
 Keep answers concise, clear, polite, and well-structured using bullet points and **bold** text. Do NOT use raw code blocks or markdown code syntax.`;
@@ -367,16 +400,16 @@ Keep answers concise, clear, polite, and well-structured using bullet points and
       let response;
       try {
         response = await ai.models.generateContent({
-          model: "gemini-3.6-flash",
+          model: "gemini-2.5-flash",
           contents: formattedContents,
           config: {
             systemInstruction: SYSTEM_INSTRUCTION
           }
         });
       } catch (primaryError) {
-        console.warn("gemini-3.6-flash failed, trying gemini-3.1-flash-lite fallback:", primaryError);
+        console.warn("gemini-2.5-flash failed, trying gemini-2.5-pro fallback:", primaryError);
         response = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite",
+          model: "gemini-2.5-pro",
           contents: formattedContents,
           config: {
             systemInstruction: SYSTEM_INSTRUCTION
