@@ -345,14 +345,14 @@ export default function Community() {
                   </p>
                 </div>
               ) : (
-                chatMessages.map((msg) => {
+                chatMessages.map((msg, idx) => {
                   const isOwnMessage = user && msg.userId === user.uid;
                   const isMsgAdmin = msg.userEmail === 'brothernitin99@gmail.com' || msg.userEmail === 'nitin.c@somaiya.edu' || msg.userEmail === 'meetshetye06@gmail.com';
                   const displayTime = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
                   return (
                     <div 
-                      key={msg.id} 
+                      key={msg.id || `msg-${idx}`} 
                       className={`flex gap-3 max-w-[85%] ${isOwnMessage ? 'ml-auto flex-row-reverse' : ''}`}
                     >
                       {/* Avatar */}
@@ -587,9 +587,9 @@ export default function Community() {
                   </p>
                 </div>
               ) : (
-                filteredAnnouncements.map((ann) => (
+                filteredAnnouncements.map((ann, idx) => (
                   <motion.div
-                    key={ann.id}
+                    key={ann.id || `ann-${idx}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`border-2 p-6 rounded-[2rem] shadow-sm relative overflow-hidden flex gap-4 ${getAnnouncementBg(ann.type)}`}

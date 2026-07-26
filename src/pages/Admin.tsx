@@ -1149,8 +1149,8 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filtered.map((reg) => (
-                      <tr key={reg.id} className="hover:bg-brand-soft/20 transition-colors group">
+                    {filtered.map((reg, idx) => (
+                      <tr key={reg.id || `admin-reg-${idx}`} className="hover:bg-brand-soft/20 transition-colors group">
                         <td className="px-6 py-5">
                           <div className="font-bold text-brand-dark group-hover:text-brand-primary transition-colors">
                             {reg.userName} 
@@ -1999,12 +1999,12 @@ export default function Admin() {
                   const lastA = a[1][a[1].length - 1]?.timestamp?.toMillis() || 0;
                   const lastB = b[1][b[1].length - 1]?.timestamp?.toMillis() || 0;
                   return lastB - lastA;
-                }).map(([uid, msgs]: any) => {
+                }).map(([uid, msgs]: any, idx: number) => {
                   const lastMsg = msgs[msgs.length - 1];
                   const unreadCount = msgs.filter((m: any) => !m.isRead && m.sender === 'user').length;
                   return (
                     <button
-                      key={uid}
+                      key={uid || `chat-user-${idx}`}
                       onClick={() => {
                         setSelectedUserChat(uid);
                         // Mark as read
@@ -2454,9 +2454,9 @@ export default function Admin() {
                 <div className="space-y-4">
                   <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Broadcast History</p>
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                    {announcements.map(ann => (
+                    {announcements.map((ann, idx) => (
                       <div 
-                        key={ann.id} 
+                        key={ann.id || `admin-ann-${idx}`} 
                         className={`p-4 rounded-2xl border shadow-sm relative group ${
                           ann.type === 'error' ? 'bg-red-50 border-red-100' : 
                           ann.type === 'warning' ? 'bg-amber-50 border-amber-100' :
@@ -2520,9 +2520,9 @@ export default function Admin() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6">
-                  {reportedPosts.map((post) => (
+                  {reportedPosts.map((post, idx) => (
                     <div 
-                      key={post.id}
+                      key={post.id || `rep-post-${idx}`}
                       className="border border-red-100/60 bg-red-50/10 rounded-[2rem] p-6 flex flex-col gap-4 hover:shadow-md transition-all duration-300 relative overflow-hidden"
                     >
                       {/* Message and Metadata */}
@@ -2648,9 +2648,9 @@ export default function Admin() {
                           (reg.college || '').toLowerCase().includes(s)
                         );
                       })
-                      .map(reg => (
+                      .map((reg, idx) => (
                         <div 
-                          key={reg.id}
+                          key={reg.id || `direct-part-${idx}`}
                           onClick={() => setSelectedDirectParticipant(reg)}
                           className="p-4 border-b border-gray-100 hover:bg-brand-soft/20 cursor-pointer flex justify-between items-center transition-colors group"
                         >

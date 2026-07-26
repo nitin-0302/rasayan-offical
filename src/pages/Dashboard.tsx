@@ -516,9 +516,9 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {userPosts.map((post) => (
+                  {userPosts.map((post, idx) => (
                     <div 
-                      key={post.id} 
+                      key={post.id || `user-post-${idx}`} 
                       className="glass-card bg-white/70 rounded-2xl p-5 border border-gray-105 shadow-sm relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-all duration-300 min-h-[140px] group"
                     >
                       <div className="space-y-3">

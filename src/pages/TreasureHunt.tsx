@@ -435,7 +435,7 @@ export default function TreasureHunt() {
                     .sort((a, b) => b.currentClueIndex - a.currentClueIndex)
                     .slice(0, 10)
                     .map((p, i) => (
-                      <div key={p.userId} className={`flex items-center justify-between p-3 rounded-xl transition-all ${p.userId === user?.uid ? 'bg-brand-soft border border-brand-primary/20 scale-[1.02]' : 'bg-gray-50'}`}>
+                      <div key={p.userId || `th-rank-${i}`} className={`flex items-center justify-between p-3 rounded-xl transition-all ${p.userId === user?.uid ? 'bg-brand-soft border border-brand-primary/20 scale-[1.02]' : 'bg-gray-50'}`}>
                         <div className="flex items-center gap-3">
                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${i < 3 ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
                              {i + 1}
