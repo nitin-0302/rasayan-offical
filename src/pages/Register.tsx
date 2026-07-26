@@ -228,6 +228,11 @@ export default function Register() {
         return { eventName: event?.name, type: event?.type, college };
       });
 
+      const eventNames = selectedEvents.map(id => {
+        const event = events.find(e => e.id === id);
+        return event?.name || id;
+      });
+
       try {
         const apiBase = import.meta.env.VITE_API_BASE_URL || '';
         await fetch(`${apiBase}/api/notify-admin`, {
@@ -240,6 +245,39 @@ export default function Register() {
             uniqueCode
           })
         });
+
+        // Sync participant data directly to Google Sheets if configured
+        const activeSheetId = localStorage.getItem('rasayan_gsheet_id');
+        const activeSheetToken = localStorage.getItem('rasayan_gsheet_token');
+        if (activeSheetId && activeSheetToken) {
+          fetch(`${apiBase}/api/gsheets/append`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${activeSheetToken}`
+            },
+            body: JSON.stringify({
+              spreadsheetId: activeSheetId,
+              registration: {
+                uniqueCode,
+                userName: profile?.name || user.displayName || 'Participant',
+                userEmail: user.email,
+                phone,
+                college,
+                eventNames,
+                totalAmount,
+                paymentMethod,
+                transactionId: paymentMethod === 'cash' ? 'PAY_AT_DESK' : transactionId.trim(),
+                paymentStatus: 'pending',
+                registrationTime: new Date().toISOString()
+              }
+            })
+          }).then(res => res.json()).then(resData => {
+            console.log("Auto-synced new participant to Google Sheet:", resData);
+          }).catch(gsheetErr => {
+            console.warn("Auto-sync to Google Sheet warning:", gsheetErr);
+          });
+        }
       } catch (err) {
         console.warn("Notification skipped:", err);
       }

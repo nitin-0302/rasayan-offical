@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, orderBy, query, doc, updateDoc, onSnapshot, setDoc, writeBatch, deleteDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
-import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode } from 'lucide-react';
+import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode, FileSpreadsheet, ExternalLink, RefreshCw, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -13,13 +13,192 @@ import ReactMarkdown from 'react-markdown';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
 export default function Admin() {
-  const { isAdmin, isCoAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isCoAdmin, loading: authLoading, googleToken, login } = useAuth();
   const { events, updateEvent, addEvent, deleteEvent } = useEvents();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'registrations' | 'quiz' | 'treasure' | 'events' | 'announcements' | 'support' | 'chat'>('registrations');
+  const [activeTab, setActiveTab] = useState<'registrations' | 'quiz' | 'treasure' | 'events' | 'announcements' | 'support' | 'chat' | 'gsheets'>('registrations');
+
+  // Google Sheets integration state
+  const [sheetIdInput, setSheetIdInput] = useState<string>(() => localStorage.getItem('rasayan_gsheet_id') || '');
+  const [activeSheetId, setActiveSheetId] = useState<string | null>(() => localStorage.getItem('rasayan_gsheet_id') || null);
+  const [activeSheetUrl, setActiveSheetUrl] = useState<string | null>(() => {
+    const saved = localStorage.getItem('rasayan_gsheet_id');
+    return saved ? `https://docs.google.com/spreadsheets/d/${saved}/edit` : null;
+  });
+  const [isCreatingSheet, setIsCreatingSheet] = useState(false);
+  const [isSyncingSheet, setIsSyncingSheet] = useState(false);
+  const [sheetStatusMsg, setSheetStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleCreateNewGoogleSheet = async () => {
+    setIsCreatingSheet(true);
+    setSheetStatusMsg(null);
+    try {
+      let token = googleToken;
+      if (!token) {
+        token = await login(true);
+      }
+      if (!token) {
+        throw new Error("Google authentication is required to create a Google Sheet. Please sign in with Google.");
+      }
+
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/gsheets/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ accessToken: token })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to create Google Sheet.");
+      }
+
+      localStorage.setItem('rasayan_gsheet_id', data.spreadsheetId);
+      localStorage.setItem('rasayan_gsheet_token', token);
+      setActiveSheetId(data.spreadsheetId);
+      setActiveSheetUrl(data.spreadsheetUrl);
+      setSheetIdInput(data.spreadsheetId);
+
+      // Immediately sync current registrations to newly created sheet
+      if (registrations.length > 0) {
+        const syncRes = await fetch(`${apiBase}/api/gsheets/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            accessToken: token,
+            spreadsheetId: data.spreadsheetId,
+            registrations: registrations.map(r => ({
+              uniqueCode: r.uniqueCode,
+              userName: r.userName,
+              userEmail: r.userEmail,
+              phone: r.phone,
+              college: r.college,
+              eventNames: Array.isArray(r.eventNames) ? r.eventNames : (Array.isArray(r.eventIds) ? r.eventIds : [r.events || 'N/A']),
+              totalAmount: r.totalAmount,
+              paymentMethod: r.paymentMethod,
+              transactionId: r.transactionId,
+              paymentStatus: r.paymentStatus,
+              registrationTime: r.registrationTime
+            }))
+          })
+        });
+        const syncData = await syncRes.json();
+        if (syncRes.ok && syncData.success) {
+          setSheetStatusMsg({
+            type: 'success',
+            text: `Created "Rasayan 2026 - Participant Registrations" sheet and transferred ${syncData.updatedCount} participant records!`
+          });
+        } else {
+          setSheetStatusMsg({
+            type: 'success',
+            text: `Google Sheet created successfully! ID: ${data.spreadsheetId}`
+          });
+        }
+      } else {
+        setSheetStatusMsg({
+          type: 'success',
+          text: `Google Sheet created successfully! Ready to accept new registrations.`
+        });
+      }
+    } catch (err: any) {
+      console.error("Create Google Sheet error:", err);
+      setSheetStatusMsg({
+        type: 'error',
+        text: err.message || "Could not create Google Sheet. Please ensure popups and Drive permissions are allowed."
+      });
+    } finally {
+      setIsCreatingSheet(false);
+    }
+  };
+
+  const handleSyncAllRegistrationsToSheet = async () => {
+    setIsSyncingSheet(true);
+    setSheetStatusMsg(null);
+    try {
+      const targetId = activeSheetId || sheetIdInput.trim();
+      if (!targetId) {
+        throw new Error("Please enter or create a Google Sheet ID first.");
+      }
+
+      let token = googleToken || localStorage.getItem('rasayan_gsheet_token');
+      if (!token) {
+        token = await login(true);
+      }
+      if (!token) {
+        throw new Error("Google Sign-In required to authenticate with Google Sheets.");
+      }
+
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/gsheets/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          accessToken: token,
+          spreadsheetId: targetId,
+          registrations: registrations.map(r => ({
+            uniqueCode: r.uniqueCode,
+            userName: r.userName,
+            userEmail: r.userEmail,
+            phone: r.phone,
+            college: r.college,
+            eventNames: Array.isArray(r.eventNames) ? r.eventNames : (Array.isArray(r.eventIds) ? r.eventIds : [r.events || 'N/A']),
+            totalAmount: r.totalAmount,
+            paymentMethod: r.paymentMethod,
+            transactionId: r.transactionId,
+            paymentStatus: r.paymentStatus,
+            registrationTime: r.registrationTime
+          }))
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to sync records to Google Sheets.");
+      }
+
+      localStorage.setItem('rasayan_gsheet_id', targetId);
+      localStorage.setItem('rasayan_gsheet_token', token);
+      setActiveSheetId(targetId);
+      setActiveSheetUrl(data.spreadsheetUrl);
+
+      setSheetStatusMsg({
+        type: 'success',
+        text: `Transferred ${data.updatedCount} participant records directly to Google Sheet!`
+      });
+    } catch (err: any) {
+      console.error("Sync Google Sheet error:", err);
+      setSheetStatusMsg({
+        type: 'error',
+        text: err.message || "Failed to sync to Google Sheets."
+      });
+    } finally {
+      setIsSyncingSheet(false);
+    }
+  };
+
+  const handleConnectExistingSheet = (id: string) => {
+    const cleanId = id.trim();
+    if (!cleanId) return;
+    localStorage.setItem('rasayan_gsheet_id', cleanId);
+    setActiveSheetId(cleanId);
+    setActiveSheetUrl(`https://docs.google.com/spreadsheets/d/${cleanId}/edit`);
+    setSheetStatusMsg({
+      type: 'success',
+      text: `Connected to Google Sheet ID: ${cleanId}. Click "Sync Now" to transfer records.`
+    });
+  };
 
   // Events editing state
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -1098,13 +1277,30 @@ export default function Admin() {
                   </span>
                 )}
               </button>
+              <button 
+                onClick={() => setActiveTab('gsheets')}
+                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-1.5 ${activeTab === 'gsheets' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-text-muted hover:text-text-main'}`}
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                Google Sheets
+                {activeSheetId && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Google Sheet Active" />
+                )}
+              </button>
             </div>
           </div>
 
           {activeTab === 'registrations' && (
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest text-right">Download Reports</p>
+              <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest text-right">Transfer & Export Reports</p>
               <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => setActiveTab('gsheets')} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center gap-2 transition-all shadow-md shadow-emerald-200 cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Google Sheets Sync
+                </button>
                 <button onClick={exportCSV} className="btn-secondary flex items-center gap-2 py-2.5 px-5 text-sm">
                   <Download className="w-4 h-4" />
                   CSV
@@ -2699,6 +2895,206 @@ export default function Admin() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        ) : activeTab === 'gsheets' ? (
+          <div className="space-y-8 animate-fadeIn">
+            <div className="glass-card p-8 rounded-[2.5rem] bg-white border border-emerald-100 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 mb-8">
+                <div>
+                  <h3 className="text-2xl font-serif text-brand-dark flex items-center gap-2.5">
+                    <FileSpreadsheet className="text-emerald-600 w-7 h-7" />
+                    Google Sheets Participant Data Hub
+                  </h3>
+                  <p className="text-xs text-text-muted mt-1">
+                    Direct real-time transfer & synchronization of all participant registrations to Google Sheets.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`px-4 py-2 rounded-xl text-xs font-bold font-mono flex items-center gap-2 border ${activeSheetId ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                    <span className={`w-2.5 h-2.5 rounded-full ${activeSheetId ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span>{activeSheetId ? 'Google Sheet Linked' : 'No Sheet Connected'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {sheetStatusMsg && (
+                <div className={`mb-8 p-4 rounded-2xl border text-sm font-bold flex items-center gap-3 ${sheetStatusMsg.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                  {sheetStatusMsg.type === 'success' ? <Check className="w-5 h-5 text-emerald-600 shrink-0" /> : <XCircle className="w-5 h-5 text-red-600 shrink-0" />}
+                  <span className="flex-1">{sheetStatusMsg.text}</span>
+                </div>
+              )}
+
+              {/* Status and Primary Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* Control 1: One-click Create Rasayan Sheet */}
+                <div className="p-6 bg-gradient-to-br from-emerald-50/80 to-teal-50/30 rounded-3xl border border-emerald-200/80 flex flex-col justify-between space-y-6">
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-md">
+                        Recommended Setup
+                      </span>
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <h4 className="text-xl font-bold text-brand-dark mb-2">Create New Rasayan Google Sheet</h4>
+                    <p className="text-xs text-text-muted leading-relaxed">
+                      Automatically creates a pre-formatted <strong>"Rasayan 2026 - Participant Registrations"</strong> spreadsheet in your Google Drive with header columns and instantly transfers all current records!
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleCreateNewGoogleSheet}
+                    disabled={isCreatingSheet}
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isCreatingSheet ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        Creating Spreadsheet & Transferring Data...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Auto-Create & Transfer to Google Sheet
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Control 2: Sync Existing Sheet */}
+                <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200/80 flex flex-col justify-between space-y-6">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 bg-slate-200/80 px-2.5 py-1 rounded-md block w-fit mb-3">
+                      Link Existing Sheet
+                    </span>
+                    <h4 className="text-xl font-bold text-brand-dark mb-2">Connect Custom Google Sheet ID</h4>
+                    <p className="text-xs text-text-muted leading-relaxed mb-4">
+                      Paste an existing Google Spreadsheet ID or URL to route participant transfers to your custom document.
+                    </p>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Paste Spreadsheet ID (e.g. 1BxiMVs0...)"
+                        value={sheetIdInput}
+                        onChange={(e) => setSheetIdInput(e.target.value)}
+                        className="input-field text-xs font-mono"
+                      />
+                      <button
+                        onClick={() => handleConnectExistingSheet(sheetIdInput)}
+                        className="btn-secondary py-2.5 px-4 text-xs font-bold shrink-0"
+                      >
+                        Link
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSyncAllRegistrationsToSheet}
+                    disabled={isSyncingSheet || (!activeSheetId && !sheetIdInput.trim())}
+                    className="w-full py-4 bg-brand-primary hover:bg-brand-dark disabled:bg-gray-300 text-white font-bold rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isSyncingSheet ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        Transferring Participant Data...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-5 h-5" />
+                        Transfer All {registrations.length} Records Now
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Active Sheet Card */}
+              {activeSheetId && (
+                <div className="p-6 bg-emerald-950 text-emerald-50 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 shadow-xl">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">Active Linked Google Sheet</p>
+                    <p className="text-sm font-mono font-bold text-white break-all">{activeSheetId}</p>
+                    <p className="text-xs text-emerald-300/80 mt-1 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      Auto-Sync Active: Incoming registrations are appended to this Google Sheet in real-time.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 shrink-0">
+                    {activeSheetUrl && (
+                      <a
+                        href={activeSheetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black px-5 py-3 rounded-2xl text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open Google Sheet ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Preview Table of Data Transferred */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-bold text-brand-dark font-serif">
+                    Participant Data Sheet Preview ({registrations.length} Rows)
+                  </h4>
+                  <span className="text-[10px] uppercase font-bold text-text-muted tracking-widest">
+                    Formatted Columns: A to K
+                  </span>
+                </div>
+
+                <div className="border border-gray-200 rounded-2xl overflow-x-auto bg-gray-50/50 max-h-[400px]">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-900 text-white font-mono text-[10px] uppercase">
+                        <th className="p-3 border-b border-slate-800">Pass Code</th>
+                        <th className="p-3 border-b border-slate-800">Name</th>
+                        <th className="p-3 border-b border-slate-800">Email</th>
+                        <th className="p-3 border-b border-slate-800">Phone</th>
+                        <th className="p-3 border-b border-slate-800">College</th>
+                        <th className="p-3 border-b border-slate-800">Events</th>
+                        <th className="p-3 border-b border-slate-800">Fee</th>
+                        <th className="p-3 border-b border-slate-800">Method</th>
+                        <th className="p-3 border-b border-slate-800">UTR/Txn</th>
+                        <th className="p-3 border-b border-slate-800">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {registrations.slice(0, 50).map((r, i) => (
+                        <tr key={r.id || `preview-r-${i}`} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-3 font-mono font-bold text-emerald-700">{r.uniqueCode || 'N/A'}</td>
+                          <td className="p-3 font-bold text-brand-dark">{r.userName || 'N/A'}</td>
+                          <td className="p-3 text-text-muted">{r.userEmail || 'N/A'}</td>
+                          <td className="p-3 font-mono">{r.phone || 'N/A'}</td>
+                          <td className="p-3 max-w-[150px] truncate">{r.college || 'N/A'}</td>
+                          <td className="p-3 max-w-[180px] truncate font-medium">
+                            {Array.isArray(r.eventNames) ? r.eventNames.join(', ') : (Array.isArray(r.eventIds) ? r.eventIds.join(', ') : (r.events || 'N/A'))}
+                          </td>
+                          <td className="p-3 font-bold">₹{r.totalAmount || 0}</td>
+                          <td className="p-3 uppercase font-bold text-[10px]">{r.paymentMethod || 'UPI'}</td>
+                          <td className="p-3 font-mono text-[10px]">{r.transactionId || 'N/A'}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${r.paymentStatus === 'verified' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {r.paymentStatus || 'pending'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {registrations.length === 0 && (
+                        <tr>
+                          <td colSpan={10} className="p-8 text-center text-text-muted italic">
+                            No participant registrations yet in the database.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         ) : null}

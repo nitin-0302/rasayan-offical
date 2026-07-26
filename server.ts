@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import cors from "cors";
 import { GoogleGenAI } from "@google/genai";
+import { google } from "googleapis";
 import https from "https";
 import fs from "fs";
 
@@ -426,6 +427,190 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
     } catch (error) {
       console.error("Error sending registration emails:", error);
       res.status(500).json({ error: "Failed to send notification emails", success: false });
+    }
+  });
+
+  // =========================================================
+  // GOOGLE SHEETS SYNC & INTEGRATION ENDPOINTS
+  // =========================================================
+
+  function formatRegistrationRow(reg: any) {
+    const code = reg.uniqueCode || reg.id || 'N/A';
+    const name = reg.userName || reg.name || 'Participant';
+    const email = reg.userEmail || reg.email || 'N/A';
+    const phone = reg.phone || 'N/A';
+    const college = reg.college || 'N/A';
+    const eventsStr = Array.isArray(reg.eventNames)
+      ? reg.eventNames.join(', ')
+      : Array.isArray(reg.eventIds)
+        ? reg.eventIds.join(', ')
+        : String(reg.events || 'N/A');
+    const fee = reg.totalAmount !== undefined ? reg.totalAmount : 0;
+    const method = String(reg.paymentMethod || 'upi').toUpperCase();
+    const utr = reg.transactionId || 'N/A';
+    const status = String(reg.paymentStatus || 'pending').toUpperCase();
+    const dateStr = reg.registrationTime ? new Date(reg.registrationTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    return [code, name, email, phone, college, eventsStr, fee, method, utr, status, dateStr];
+  }
+
+  // Route 1: Create a new Rasayan 2026 Google Sheet on behalf of user
+  app.post("/api/gsheets/create", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const accessToken = req.body.accessToken || (authHeader ? authHeader.replace('Bearer ', '') : null);
+
+      if (!accessToken) {
+        return res.status(401).json({ error: "Google OAuth Access Token is required to create a spreadsheet." });
+      }
+
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ access_token: accessToken });
+
+      const sheets = google.sheets({ version: 'v4', auth });
+
+      const createRes = await sheets.spreadsheets.create({
+        requestBody: {
+          properties: {
+            title: 'Rasayan 2026 - Participant Registrations',
+          },
+          sheets: [
+            {
+              properties: {
+                title: 'Participants',
+                gridProperties: {
+                  frozenRowCount: 1,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      const spreadsheetId = createRes.data.spreadsheetId;
+      const spreadsheetUrl = createRes.data.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+
+      const headers = [
+        ['Unique Pass Code', 'Participant Name', 'Email', 'Phone Number', 'College Name', 'Registered Events', 'Total Fee (₹)', 'Payment Method', 'Transaction ID / UTR', 'Payment Status', 'Registration Date']
+      ];
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: 'Participants!A1:K1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: headers },
+      });
+
+      try {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [
+              {
+                repeatCell: {
+                  range: { sheetId: 0, startRowIndex: 0, endRowIndex: 1 },
+                  cell: {
+                    userEnteredFormat: {
+                      backgroundColor: { red: 0.08, green: 0.12, blue: 0.25 },
+                      textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 }, fontSize: 11 },
+                      horizontalAlignment: 'CENTER',
+                    },
+                  },
+                  fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)',
+                },
+              },
+            ],
+          },
+        });
+      } catch (styleErr) {
+        console.warn("Header formatting warning (non-fatal):", styleErr);
+      }
+
+      res.json({ success: true, spreadsheetId, spreadsheetUrl });
+    } catch (err: any) {
+      console.error("Failed to create Google Sheet:", err);
+      res.status(500).json({ error: err.message || "Failed to create Google Sheet." });
+    }
+  });
+
+  // Route 2: Sync all participants batch to a Google Sheet
+  app.post("/api/gsheets/sync", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const accessToken = req.body.accessToken || (authHeader ? authHeader.replace('Bearer ', '') : null);
+      const { spreadsheetId, registrations } = req.body;
+
+      if (!spreadsheetId) {
+        return res.status(400).json({ error: "spreadsheetId parameter is required." });
+      }
+      if (!accessToken) {
+        return res.status(401).json({ error: "Google OAuth Access Token is required." });
+      }
+
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ access_token: accessToken });
+
+      const sheets = google.sheets({ version: 'v4', auth });
+
+      const headers = [
+        ['Unique Pass Code', 'Participant Name', 'Email', 'Phone Number', 'College Name', 'Registered Events', 'Total Fee (₹)', 'Payment Method', 'Transaction ID / UTR', 'Payment Status', 'Registration Date']
+      ];
+
+      const rows = (Array.isArray(registrations) ? registrations : []).map(formatRegistrationRow);
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: spreadsheetId.trim(),
+        range: 'Participants!A1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [...headers, ...rows]
+        },
+      });
+
+      res.json({
+        success: true,
+        updatedCount: rows.length,
+        spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId.trim()}/edit`
+      });
+    } catch (err: any) {
+      console.error("Failed to sync registrations to Google Sheet:", err);
+      res.status(500).json({ error: err.message || "Failed to sync to Google Sheet." });
+    }
+  });
+
+  // Route 3: Append single new participant row
+  app.post("/api/gsheets/append", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const accessToken = req.body.accessToken || (authHeader ? authHeader.replace('Bearer ', '') : null);
+      const { spreadsheetId, registration } = req.body;
+
+      if (!spreadsheetId) {
+        return res.status(400).json({ error: "spreadsheetId parameter is required." });
+      }
+      if (!accessToken) {
+        return res.status(401).json({ error: "Google OAuth Access Token is required." });
+      }
+
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ access_token: accessToken });
+
+      const sheets = google.sheets({ version: 'v4', auth });
+      const row = formatRegistrationRow(registration);
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: spreadsheetId.trim(),
+        range: 'Participants!A:K',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+          values: [row]
+        },
+      });
+
+      res.json({ success: true, message: "Participant appended to Google Sheet." });
+    } catch (err: any) {
+      console.error("Failed to append participant to Google Sheet:", err);
+      res.status(500).json({ error: err.message || "Failed to append to Google Sheet." });
     }
   });
 
