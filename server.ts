@@ -566,6 +566,36 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
     }
   });
 
+  // Helper to determine or create valid sheet tab name (Participants or first sheet tab)
+  async function getTargetSheetName(sheets: any, spreadsheetId: string): Promise<string> {
+    try {
+      const meta = await sheets.spreadsheets.get({ spreadsheetId });
+      const sheetList = meta.data.sheets || [];
+      const found = sheetList.find((s: any) => s.properties?.title === 'Participants');
+      if (found) return 'Participants';
+      if (sheetList.length > 0 && sheetList[0].properties?.title) {
+        try {
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              requests: [{
+                addSheet: {
+                  properties: { title: 'Participants' }
+                }
+              }]
+            }
+          });
+          return 'Participants';
+        } catch {
+          return sheetList[0].properties.title;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch sheet metadata, using Participants fallback:", e);
+    }
+    return 'Participants';
+  }
+
   // Route 2: Sync all participants batch to a Google Sheet
   app.post("/api/gsheets/sync", async (req, res) => {
     try {
@@ -584,6 +614,7 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
       auth.setCredentials({ access_token: accessToken });
 
       const sheets = google.sheets({ version: 'v4', auth });
+      const sheetName = await getTargetSheetName(sheets, spreadsheetId.trim());
 
       const headers = [
         ['Unique Pass Code', 'Participant Name', 'Email', 'Phone Number', 'College Name', 'Registered Events', 'Total Fee (₹)', 'Payment Method', 'Transaction ID / UTR', 'Payment Status', 'Registration Date']
@@ -593,7 +624,7 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: spreadsheetId.trim(),
-        range: 'Participants!A1',
+        range: `${sheetName}!A1`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [...headers, ...rows]
@@ -629,11 +660,12 @@ Always answer thoroughly, humorously, and clearly using bold text, bullet points
       auth.setCredentials({ access_token: accessToken });
 
       const sheets = google.sheets({ version: 'v4', auth });
+      const sheetName = await getTargetSheetName(sheets, spreadsheetId.trim());
       const row = formatRegistrationRow(registration);
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: spreadsheetId.trim(),
-        range: 'Participants!A:K',
+        range: `${sheetName}!A:K`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [row]

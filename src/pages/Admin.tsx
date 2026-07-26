@@ -22,11 +22,12 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState<'registrations' | 'quiz' | 'treasure' | 'events' | 'submissions' | 'announcements' | 'support' | 'chat' | 'gsheets'>('registrations');
 
   // Google Sheets integration state
-  const [sheetIdInput, setSheetIdInput] = useState<string>(() => localStorage.getItem('rasayan_gsheet_id') || '');
-  const [activeSheetId, setActiveSheetId] = useState<string | null>(() => localStorage.getItem('rasayan_gsheet_id') || null);
+  const DEFAULT_SHEET_ID = '1Fx4y7LiVJ9suHEJh0N-xt3qqxJs2D00xfABw3lfOLT8';
+  const [sheetIdInput, setSheetIdInput] = useState<string>(() => localStorage.getItem('rasayan_gsheet_id') || DEFAULT_SHEET_ID);
+  const [activeSheetId, setActiveSheetId] = useState<string | null>(() => localStorage.getItem('rasayan_gsheet_id') || DEFAULT_SHEET_ID);
   const [activeSheetUrl, setActiveSheetUrl] = useState<string | null>(() => {
-    const saved = localStorage.getItem('rasayan_gsheet_id');
-    return saved ? `https://docs.google.com/spreadsheets/d/${saved}/edit` : null;
+    const saved = localStorage.getItem('rasayan_gsheet_id') || DEFAULT_SHEET_ID;
+    return `https://docs.google.com/spreadsheets/d/${saved}/edit`;
   });
   const [isCreatingSheet, setIsCreatingSheet] = useState(false);
   const [isSyncingSheet, setIsSyncingSheet] = useState(false);

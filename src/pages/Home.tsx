@@ -79,7 +79,7 @@ export default function Home() {
                 loop={true}
                 muted={true}
                 playsInline={true}
-                preload="auto"
+                preload="metadata"
                 className="w-full h-full object-cover absolute inset-0 opacity-85"
                 onError={() => {
                   console.warn("Banner background video failed to play or load. Falling back to static vectors.");

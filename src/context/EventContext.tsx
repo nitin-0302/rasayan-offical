@@ -39,8 +39,25 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       } else {
         const loaded: Event[] = [];
         snapshot.forEach((docSnap) => {
-          loaded.push({ id: docSnap.id, ...docSnap.data() } as Event);
+          const data = docSnap.data() as Event;
+          // Filter out lablable if present in Firestore
+          if (
+            !docSnap.id.toLowerCase().includes('lablable') && 
+            !docSnap.id.toLowerCase().includes('labelable') &&
+            !(data.name && data.name.toLowerCase().includes('lablable')) &&
+            !(data.name && data.name.toLowerCase().includes('labelable'))
+          ) {
+            loaded.push({ id: docSnap.id, ...data });
+          }
         });
+
+        // Ensure all 12 official EVENTS are present
+        const loadedIds = new Set(loaded.map(e => e.id));
+        for (const defaultEvt of EVENTS) {
+          if (!loadedIds.has(defaultEvt.id)) {
+            loaded.push(defaultEvt);
+          }
+        }
 
         // Sort loaded events by category or name
         const sorted = loaded.sort((a, b) => {
