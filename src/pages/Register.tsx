@@ -519,8 +519,8 @@ export default function Register() {
                     <span className="text-brand-primary">Total: ₹{totalAmount}</span>
                   </h3>
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {selectedEvents.map(id => (
-                      <span key={id} className="bg-white/10 text-xs px-3 py-1 rounded-full">{events.find(e => e.id === id)?.name}</span>
+                    {selectedEvents.map((id, idx) => (
+                      <span key={`${id}-${idx}`} className="bg-white/10 text-xs px-3 py-1 rounded-full">{events.find(e => e.id === id)?.name}</span>
                     ))}
                   </div>
                   <p className="text-sm opacity-70 italic mb-4">* Please ensure all rules are understood before proceeding.</p>

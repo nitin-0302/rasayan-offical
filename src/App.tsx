@@ -21,13 +21,15 @@ import TreasureHunt from './pages/TreasureHunt';
 import Games from './pages/Games';
 import Community from './pages/Community';
 import Chatbot from './components/Chatbot';
+import CursorGlow from './components/CursorGlow';
 
 export default function App() {
   return (
     <AuthProvider>
       <EventProvider>
         <Router>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col min-h-screen relative">
+            <CursorGlow />
             <Navbar />
             <BroadcastNotifier />
             <PriorityNotifier />

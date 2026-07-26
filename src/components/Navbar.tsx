@@ -19,7 +19,7 @@ export default function Navbar() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <nav className="fixed top-0 left-0 right-0 z-50 mac-tinted-nav">
       {authError && (
         <div className="bg-red-50 text-red-600 px-4 py-2 text-xs flex items-center justify-between animate-in slide-in-from-top duration-300">
           <div className="flex items-center gap-2">
@@ -80,9 +80,9 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/dashboard"
-                  className="flex items-center gap-1 bg-brand-soft text-brand-primary px-3 py-1.5 rounded-full text-sm font-medium hover:bg-brand-primary hover:text-white transition-all"
+                  className="btn-mac-tinted-red text-xs py-1.5 px-3.5 flex items-center gap-1.5 font-medium"
                 >
-                  <LayoutDashboard className="w-4 h-4" />
+                  <LayoutDashboard className="w-3.5 h-3.5" />
                   Dashboard
                 </Link>
                 <button

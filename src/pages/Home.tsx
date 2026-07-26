@@ -64,11 +64,9 @@ export default function Home() {
                 style={{
                   top: '50%',
                   left: '50%',
-                  width: '100vw',
-                  height: '56.25vw',
-                  minHeight: '100%',
-                  minWidth: '177.77vh',
-                  transform: 'translate(-50%, -50%) scale(1.35)',
+                  width: 'max(100vw, 177.78vh)',
+                  height: 'max(56.25vw, 100vh)',
+                  transform: 'translate(-50%, -50%) scale(1.15)',
                 }}
                 allow="autoplay; encrypted-media"
                 frameBorder="0"
@@ -138,10 +136,10 @@ export default function Home() {
       </section>
 
       {/* Theme Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
+            <div className="glass-card-tinted p-8 md:p-10">
               <h2 className="text-4xl font-serif text-brand-dark mb-6 tracking-tight">About The Theme</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6">
                 <strong>Panchtatva</strong> celebrates Earth, Water, Fire, Air, and Space. These elements remind us that life is a delicate interplay of forces and that understanding and respecting nature is essential for a sustainable future.
@@ -152,7 +150,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {PanchtatvaCards.slice(0, 4).map((item, idx) => (
-                <div key={idx} className="p-6 rounded-3xl bg-brand-soft border border-brand-primary/10 hover:shadow-lg transition-all">
+                <div key={idx} className="glass-card-tinted p-6 hover:scale-[1.02] transition-transform">
                   <item.icon className={`w-10 h-10 ${item.color} mb-4`} />
                   <h3 className="text-xl font-bold text-brand-dark mb-2">{item.name}</h3>
                   <p className="text-sm text-text-muted">{item.desc}</p>
@@ -164,27 +162,27 @@ export default function Home() {
       </section>
 
       {/* Highlights Section */}
-      <section className="py-24 bg-bg-paper">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-serif text-brand-dark mb-16">Fest Highlights</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="glass-card p-10 rounded-3xl">
-              <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+            <div className="glass-card-tinted p-10 hover:scale-[1.02]">
+              <div className="w-16 h-16 bg-red-500/15 rounded-2xl border border-red-500/20 flex items-center justify-center mb-6 mx-auto">
                 <FlaskConical className="text-brand-primary w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-brand-dark mb-4">13+ Events</h3>
               <p className="text-text-muted leading-relaxed">From memory challenges to shark tank pitches, we have something for everyone.</p>
             </div>
-            <div className="glass-card p-10 rounded-3xl">
-              <div className="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+            <div className="glass-card-tinted p-10 hover:scale-[1.02]">
+              <div className="w-16 h-16 bg-violet-500/15 rounded-2xl border border-violet-500/20 flex items-center justify-center mb-6 mx-auto">
                 <ArrowRight className="text-violet-600 w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-brand-dark mb-4">Inter-Collegiate</h3>
               <p className="text-text-muted leading-relaxed">Connect with minds across colleges and demonstrate your scientific prowess.</p>
             </div>
-            <div className="glass-card p-10 rounded-3xl">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                <ArrowRight className="text-blue-600 w-8 h-8" />
+            <div className="glass-card-tinted p-10 hover:scale-[1.02]">
+              <div className="w-16 h-16 bg-sky-500/15 rounded-2xl border border-sky-500/20 flex items-center justify-center mb-6 mx-auto">
+                <ArrowRight className="text-sky-600 w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-brand-dark mb-4">Expert Mentors</h3>
               <p className="text-text-muted leading-relaxed">Gain insights from seasoned educators and industry professionals.</p>

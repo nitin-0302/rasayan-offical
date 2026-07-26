@@ -280,19 +280,27 @@ export default function Chatbot() {
                </div>
 
                {/* Mode Switcher */}
-               <div className="flex bg-white/10 p-1 rounded-xl mt-4 z-10 relative">
+               <div className="flex bg-black/20 backdrop-blur-md p-1 rounded-2xl mt-4 z-10 relative border border-white/10">
                   <button 
                     onClick={() => setMode('ai')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'ai' ? 'bg-brand-primary text-white shadow-lg' : 'text-white/60 hover:text-white'}`}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 ${
+                      mode === 'ai' 
+                        ? 'bg-white/20 text-white shadow-sm border border-white/30 backdrop-blur-md' 
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                     AI Assistant
                   </button>
                   <button 
                     onClick={() => setMode('admin')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 relative ${mode === 'admin' ? 'bg-brand-primary text-white shadow-lg' : 'text-white/60 hover:text-white'}`}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 relative ${
+                      mode === 'admin' 
+                        ? 'bg-white/20 text-white shadow-sm border border-white/30 backdrop-blur-md' 
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
                   >
-                    <Shield className="w-3.5 h-3.5" />
+                    <Shield className="w-3.5 h-3.5 text-red-300" />
                     Admin Help
                     {unreadCount > 0 && mode !== 'admin' && (
                       <span className="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full border border-brand-dark" />
@@ -387,14 +395,15 @@ export default function Chatbot() {
 
       <div className={`fixed bottom-6 right-6 z-50 ${isOpen ? 'hidden sm:block' : 'block'}`}>
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-brand-primary text-white p-4 rounded-full shadow-lg relative group transition-all"
+          className="btn-primary !p-4 !rounded-full shadow-2xl relative group transition-all flex items-center justify-center border border-white/30"
+          title="Open AI Assistant & Support"
         >
           <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
               {unreadCount}
             </span>
           )}

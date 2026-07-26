@@ -616,7 +616,7 @@ export default function Quiz() {
                     <div className="space-y-4 max-w-xl mx-auto">
                       {[...allResponses].sort((a: any, b: any) => b.score - a.score).slice(0, 5).map((res, i) => (
                         <motion.div 
-                          key={res.id}
+                          key={res.id || res.userId || `standing-${i}`}
                           initial={{ x: -20, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: i * 0.1 }}
@@ -656,7 +656,7 @@ export default function Quiz() {
                       <div className="flex items-center gap-4">
                         {streak >= 3 && (
                           <motion.div 
-                            key={streak}
+                            key={`streak-${streak}`}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border border-orange-200"
@@ -757,7 +757,7 @@ export default function Quiz() {
                           </div>
                           <div className="space-y-4">
                             {[...allResponses].sort((a: any, b: any) => b.score - a.score).map((res, i) => (
-                              <div key={i} className="flex items-center justify-between">
+                              <div key={res.id || `res-${i}`} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                   <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${i === 0 ? 'bg-amber-500' : 'bg-white/10'}`}>
                                     {i + 1}

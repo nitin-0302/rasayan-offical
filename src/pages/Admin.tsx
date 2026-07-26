@@ -1169,11 +1169,11 @@ export default function Admin() {
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex flex-wrap gap-2 mb-2">
-                            {reg.eventIds.map((eid: string) => {
+                            {reg.eventIds.map((eid: string, eIdx: number) => {
                               const event = events.find(e => e.id === eid);
                               const members = reg.teamDetails?.[eid];
                               return (
-                                <div key={eid} className="group/item relative">
+                                <div key={`${reg.id}-${eid}-${eIdx}`} className="group/item relative">
                                   <span className="bg-white px-2 py-0.5 rounded text-[10px] font-bold text-brand-primary border border-brand-primary/10 shadow-sm cursor-help">
                                     {event?.name}
                                     {members && <span className="ml-1 text-amber-600">({members.length})</span>}
@@ -1457,7 +1457,7 @@ export default function Admin() {
                       .filter(res => res.quizId === selectedQuizId && res.sessionId === quizConfig?.sessionId)
                       .sort((a, b) => b.score - a.score)
                       .map((res, i) => (
-                        <div key={res.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <div key={res.id || res.userId || `admin-qres-${i}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                           <div className="flex items-center gap-3">
                             <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${i < 3 ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
                               {i + 1}
@@ -1811,7 +1811,7 @@ export default function Admin() {
                       .filter(res => res.huntId === selectedHuntId)
                       .sort((a, b) => b.currentClueIndex - a.currentClueIndex)
                       .map((res, i) => (
-                        <div key={res.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <div key={res.id || res.userId || `admin-tres-${i}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                           <div className="flex items-center gap-3">
                             <span className="w-8 h-8 rounded-full bg-brand-soft flex items-center justify-center text-xs font-bold text-brand-primary">
                               {i+1}
@@ -2855,7 +2855,7 @@ export default function Admin() {
                   .slice(0, 5)
                   .map((res, i) => (
                     <motion.div 
-                      key={res.id}
+                      key={res.id || res.userId || `fs-qres-${i}`}
                       initial={{ x: -100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: i * 0.1 }}
@@ -2883,7 +2883,7 @@ export default function Admin() {
                   .slice(0, 5)
                   .map((res, i) => (
                     <motion.div 
-                      key={res.id}
+                      key={res.id || res.userId || `fs-tres-${i}`}
                       initial={{ x: -100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: i * 0.1 }}

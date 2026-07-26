@@ -340,7 +340,7 @@ export default function TreasureHunt() {
                         <div className="flex flex-wrap gap-2">
                           {activeGame?.clues?.map((_: any, i: number) => (
                             <div 
-                              key={i}
+                              key={`clue-dot-${i}`}
                               className={`w-3 h-3 rounded-full transition-all duration-500 ${i < progress.currentClueIndex ? 'bg-green-500' : i === progress.currentClueIndex ? 'bg-brand-primary scale-125' : 'bg-gray-200'}`}
                             />
                           ))}

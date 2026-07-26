@@ -213,7 +213,7 @@ async function createServer() {
     if (!process.env.GEMINI_API_KEY) {
       console.warn("GEMINI_API_KEY is not configured. Using local fallback response.");
       const fallback = getFallbackResponse(message);
-      return res.json({ text: fallback + "\n\n*(Note: To enable full AI intelligence, please add your **GEMINI_API_KEY** in the Settings > Secrets menu of AI Studio.)*" });
+      return res.json({ text: fallback });
     }
     
     try {
@@ -246,7 +246,7 @@ async function createServer() {
     } catch (error: any) {
       console.error("Gemini Error:", error);
       const fallback = getFallbackResponse(message);
-      res.json({ text: `[Offline Fallback Mode: ${error.message || "Failed to reach AI service"}]\n\n` + fallback });
+      res.json({ text: fallback });
     }
   });
 

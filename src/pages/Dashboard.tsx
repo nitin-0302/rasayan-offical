@@ -374,8 +374,8 @@ export default function Dashboard() {
                 <Link to="/register" className="btn-primary inline-flex py-3 px-8 text-sm">Register Now</Link>
               </div>
             ) : (
-              registrations.map((reg) => (
-                <div key={reg.id} className="glass-card p-5 sm:p-8 rounded-[1.8rem] sm:rounded-[2.5rem] relative overflow-hidden group bg-white/70 shadow-sm border border-gray-100">
+              registrations.map((reg, idx) => (
+                <div key={reg.id || `reg-${idx}`} className="glass-card p-5 sm:p-8 rounded-[1.8rem] sm:rounded-[2.5rem] relative overflow-hidden group bg-white/70 shadow-sm border border-gray-100">
                   <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-5 transition-opacity pointer-events-none">
                     <Award className="w-24 h-24 sm:w-32 sm:h-32 text-brand-dark" />
                   </div>
@@ -431,10 +431,10 @@ export default function Dashboard() {
                       )}
 
                       <div className="flex flex-wrap gap-1.5 mb-4">
-                        {reg.eventIds.map((eid: string) => {
+                        {reg.eventIds.map((eid: string, eIdx: number) => {
                           const evt = events.find(e => e.id === eid);
                           return (
-                            <span key={eid} className="bg-brand-soft text-brand-primary border border-brand-primary/5 text-[11px] px-3 py-1 rounded-full font-bold">
+                            <span key={`${reg.id || idx}-${eid}-${eIdx}`} className="bg-brand-soft text-brand-primary border border-brand-primary/5 text-[11px] px-3 py-1 rounded-full font-bold">
                               {evt?.name || 'Selected Category'}
                             </span>
                           );
