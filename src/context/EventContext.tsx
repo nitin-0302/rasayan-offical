@@ -141,6 +141,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useEvents() {
   const context = useContext(EventContext);
   if (!context) {

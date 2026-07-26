@@ -4,10 +4,9 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, orderBy, query, doc, updateDoc, onSnapshot, setDoc, writeBatch, deleteDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
-import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode, FileSpreadsheet, ExternalLink, RefreshCw, Check, Upload } from 'lucide-react';
+import { Shield, Users, Filter, Download, FileText, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode, FileSpreadsheet, ExternalLink, RefreshCw, Check, Upload } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import ReactMarkdown from 'react-markdown';
 
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
@@ -1140,23 +1139,6 @@ export default function Admin() {
     document.body.removeChild(link);
   };
 
-  const exportExcel = () => {
-    const data = filtered.map(r => ({
-      Name: r.userName,
-      Email: r.userEmail,
-      Phone: r.phone,
-      RegID: r.uniqueCode || '-',
-      College: r.college,
-      Events: r.eventIds.map((eid: string) => events.find(e => e.id === eid)?.name).join(", "),
-      RegisteredAt: new Date(r.registrationTime).toLocaleString()
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
-    XLSX.writeFile(workbook, "rasayan_registrations.xlsx");
-  };
-
   const exportPDF = () => {
     const doc = new jsPDF() as any;
     doc.text("Rasayan 2026 Registration Report", 14, 15);
@@ -1328,10 +1310,6 @@ export default function Admin() {
                 <button onClick={exportCSV} className="btn-secondary flex items-center gap-2 py-2.5 px-5 text-sm">
                   <Download className="w-4 h-4" />
                   CSV
-                </button>
-                <button onClick={exportExcel} className="btn-secondary flex items-center gap-2 py-2.5 px-5 text-sm !border-green-600 !text-green-600 hover:bg-green-50">
-                  <TableIcon className="w-4 h-4" />
-                  Excel
                 </button>
                 <button onClick={exportPDF} className="btn-secondary flex items-center gap-2 py-2.5 px-5 text-sm !border-red-600 !text-red-600 hover:bg-red-50">
                   <FileText className="w-4 h-4" />

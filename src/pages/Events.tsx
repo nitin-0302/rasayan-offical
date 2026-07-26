@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEvents } from '../context/EventContext';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
-import { MapPin, Monitor, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { MapPin, Monitor, Sparkles, ArrowRight, ShieldCheck, Upload } from 'lucide-react';
 import { AtomicVector, BeakerVector } from '../components/ChemistryVectors';
 import { Link } from 'react-router-dom';
+import OnlineSubmissionModal from '../components/OnlineSubmissionModal';
+import { Event } from '../constants/events';
 
 export default function Events() {
   const { events } = useEvents();
-  const [filter, setFilter] = React.useState<'all' | 'offline' | 'online'>('all');
+  const { user } = useAuth();
+  const [filter, setFilter] = useState<'all' | 'offline' | 'online'>('all');
+  const [selectedSubEvent, setSelectedSubEvent] = useState<Event | null>(null);
 
   const filteredEvents = events.filter(e => filter === 'all' || e.type === filter);
 
@@ -89,23 +94,48 @@ export default function Events() {
                 </div>
               </div>
               
-              <div className="p-5 bg-gradient-to-r from-red-500/10 via-rose-500/5 to-white/40 backdrop-blur-xl border-t border-red-500/15 flex items-center justify-between">
+              <div className="p-5 bg-gradient-to-r from-red-500/10 via-rose-500/5 to-white/40 backdrop-blur-xl border-t border-red-500/15 flex items-center justify-between gap-2">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-gray-500">Prizes / Winners</p>
                   <p className="text-sm font-bold text-brand-dark">{event.winners}</p>
                 </div>
-                <Link 
-                  to={`/register?event=${event.id}`} 
-                  className="btn-mac-tinted-red !py-1.5 !px-3 text-xs flex items-center gap-1 font-semibold group-hover:bg-red-600 group-hover:text-white transition-all"
-                >
-                  Register
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                <div className="flex items-center gap-2">
+                  {event.type === 'online' && (
+                    <button
+                      onClick={() => {
+                        if (!user) {
+                          alert("Please sign in first to submit your online entry.");
+                          return;
+                        }
+                        setSelectedSubEvent(event);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white !py-1.5 !px-3 rounded-xl text-xs font-bold flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Submit Entry
+                    </button>
+                  )}
+                  <Link 
+                    to={`/register?event=${event.id}`} 
+                    className="btn-mac-tinted-red !py-1.5 !px-3 text-xs flex items-center gap-1 font-semibold group-hover:bg-red-600 group-hover:text-white transition-all"
+                  >
+                    Register
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {selectedSubEvent && (
+        <OnlineSubmissionModal
+          event={selectedSubEvent}
+          isOpen={!!selectedSubEvent}
+          onClose={() => setSelectedSubEvent(null)}
+        />
+      )}
     </div>
   );
 }

@@ -6,8 +6,10 @@ import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Calendar, Award, Settings, User as UserIcon, Check, Clock, XCircle, Info, Brain, Map, Shield, Headphones, MessageSquare, QrCode } from 'lucide-react';
+import { Sparkles, Calendar, Award, Settings, User as UserIcon, Check, Clock, XCircle, Info, Brain, Map, Shield, Headphones, MessageSquare, QrCode, Upload } from 'lucide-react';
 import EntryPassModal from '../components/EntryPassModal';
+import OnlineSubmissionModal from '../components/OnlineSubmissionModal';
+import { Event } from '../constants/events';
 
 const RegistrationSkeleton = () => (
   <div className="glass-card p-5 sm:p-8 rounded-[1.8rem] sm:rounded-[2.5rem] relative overflow-hidden ring-1 ring-gray-100/50 bg-white/60">
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const [quizActive, setQuizActive] = useState(false);
   const [treasureActive, setTreasureActive] = useState(false);
   const [selectedPassReg, setSelectedPassReg] = useState<any | null>(null);
+  const [selectedSubEvent, setSelectedSubEvent] = useState<Event | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -417,16 +420,56 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      <div className="flex flex-wrap gap-1.5 mb-4">
+                      <div className="flex flex-wrap gap-2 mb-4">
                         {reg.eventIds.map((eid: string, eIdx: number) => {
                           const evt = events.find(e => e.id === eid);
                           return (
-                            <span key={`${reg.id || idx}-${eid}-${eIdx}`} className="bg-brand-soft text-brand-primary border border-brand-primary/5 text-[11px] px-3 py-1 rounded-full font-bold">
-                              {evt?.name || 'Selected Category'}
-                            </span>
+                            <div key={`${reg.id || idx}-${eid}-${eIdx}`} className="flex items-center gap-1.5 bg-brand-soft text-brand-primary border border-brand-primary/10 text-[11px] pl-3 pr-2 py-1 rounded-full font-bold">
+                              <span>{evt?.name || 'Selected Event'}</span>
+                              {reg.paymentStatus === 'approved' && evt && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedSubEvent(evt)}
+                                  className="ml-1 bg-brand-primary text-white hover:bg-brand-dark px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all shadow-sm cursor-pointer"
+                                  title={`Upload Submission for ${evt.name}`}
+                                >
+                                  <Upload className="w-2.5 h-2.5" />
+                                  <span>Submit Entry</span>
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
+
+                      {reg.paymentStatus === 'approved' && (
+                        <div className="p-3 bg-gradient-to-r from-brand-soft/80 to-red-50/80 border border-brand-primary/15 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs mb-3">
+                          <div className="flex items-center gap-2">
+                            <Upload className="w-4 h-4 text-brand-primary shrink-0" />
+                            <div>
+                              <p className="font-bold text-brand-dark">Online Entry Submission Unlocked</p>
+                              <p className="text-[10px] text-text-muted">Payment verified! You can now upload your files, posters, reels, or project links.</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
+                            {reg.eventIds.map((eid: string) => {
+                              const evt = events.find(e => e.id === eid);
+                              if (!evt) return null;
+                              return (
+                                <button
+                                  key={`sub-btn-${eid}`}
+                                  onClick={() => setSelectedSubEvent(evt)}
+                                  className="bg-brand-primary text-white hover:bg-brand-dark px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                                >
+                                  <Upload className="w-3 h-3" />
+                                  <span>Submit: {evt.name.split(' ')[0]}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="p-3.5 bg-gray-50/50 rounded-xl border border-gray-100/50 text-xs text-brand-primary/90 italic leading-relaxed">
                         "{reg.confirmationMessage}"
                       </div>
@@ -546,6 +589,14 @@ export default function Dashboard() {
         <EntryPassModal
           registration={selectedPassReg}
           onClose={() => setSelectedPassReg(null)}
+        />
+      )}
+
+      {selectedSubEvent && (
+        <OnlineSubmissionModal
+          event={selectedSubEvent}
+          isOpen={!!selectedSubEvent}
+          onClose={() => setSelectedSubEvent(null)}
         />
       )}
     </div>

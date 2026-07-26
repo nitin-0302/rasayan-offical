@@ -6,7 +6,7 @@ import {defineConfig, loadEnv} from 'vite';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: './', // Ensures relative paths for GitHub Pages and subdirectories
+    base: '/', // Base path for web application asset routing
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -15,6 +15,10 @@ export default defineConfig(({mode}) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+    },
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
