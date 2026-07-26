@@ -280,8 +280,6 @@ export default function Chatbot() {
     }
   };
 
-  if (!user) return null;
-
   return (
     <>
       <AnimatePresence>
@@ -369,7 +367,19 @@ export default function Chatbot() {
                         : 'bg-white text-gray-800 rounded-tl-none border border-gray-100 prose font-sans'
                     }`}>
                       {msg.sender === 'ai' ? (
-                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        <div className="space-y-2">
+                          <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          {(msg.text.includes("Admin Help") || msg.text.includes("Admin Chat") || msg.text.includes("technical support") || msg.text.includes("support team")) && (
+                            <button
+                              type="button"
+                              onClick={() => setMode('admin')}
+                              className="mt-2 text-xs font-bold bg-brand-primary text-white px-3 py-1.5 rounded-xl hover:bg-brand-dark transition-colors flex items-center gap-1.5 shadow-sm"
+                            >
+                              <Shield className="w-3.5 h-3.5 text-amber-300" />
+                              Connect to Admin Help
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         msg.text
                       )}
