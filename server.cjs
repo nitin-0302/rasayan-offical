@@ -86,95 +86,39 @@ function getFallbackResponse(userMessage) {
     "refund"
   ];
   if (techKeywords.some((kw) => msg.includes(kw))) {
-    return "For technical issues, payment errors, or account help, please switch to the **'Admin Help'** tab at the top of this chat window to message our technical support team directly.";
-  }
-  const festKeywords = [
-    "rasayan",
-    "fest",
-    "event",
-    "panchtatva",
-    "quiz",
-    "mind battle",
-    "mindscape",
-    "shark",
-    "elemental",
-    "tatva",
-    "trail",
-    "forensics",
-    "treasure",
-    "hunt",
-    "srishti",
-    "rahasya",
-    "shuffle",
-    "atomic",
-    "housie",
-    "kismat",
-    "doodle",
-    "doodleium",
-    "vision",
-    "eco",
-    "reel",
-    "reel-iemental",
-    "meme",
-    "sustain",
-    "register",
-    "registration",
-    "price",
-    "rule",
-    "rules",
-    "fee",
-    "cost",
-    "date",
-    "when",
-    "venue",
-    "where",
-    "location",
-    "college",
-    "somaiya",
-    "hi",
-    "hello",
-    "hey",
-    "greetings",
-    "theme",
-    "time",
-    "schedule",
-    "help",
-    "admin",
-    "contact",
-    "support"
-  ];
-  const isFestQuery = festKeywords.some((keyword) => msg.includes(keyword));
-  if (!isFestQuery) {
-    return "I am the Rasayan 2026 AI Assistant, strictly restricted to answering queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!";
+    return "\u26A1 *Bzzzt!* Sounds like an activation energy error! For technical bugs, payment glitches, or direct human support, switch to the **'Admin Help'** tab at the top of this chat to message our event coordinators directly! \u{1F6E1}\uFE0F";
   }
   if (msg.includes("register") || msg.includes("registration") || msg.includes("sign up") || msg.includes("apply") || msg.includes("join")) {
-    return "You can easily register for any event through our website! Navigate to the **Events** or **Register** section, choose the events you want to participate in, fill out your team or individual details, and submit. You will receive an instant confirmation email with your unique Registration ID.";
+    return "\u{1F680} **Ready to react?** Registering is smoother than a noble gas reaction! Just head over to our **Events** or **Register** tab, pick your favorite elemental challenges, fill in your details, and boom\u2014you'll get an instant confirmation pass with a unique QR code! \u{1F39F}\uFE0F\u2728";
   }
   if (msg.includes("price") || msg.includes("fee") || msg.includes("cost") || msg.includes("how much") || msg.includes("payment") || msg.includes("amount")) {
-    return "Here are the official registration fees for Rasayan 2026 events:\n\n**On-Ground Events:**\n- \u{1F9E0} **Green Mind Battle (Quiz)**: \u20B950 (Solo)\n- \u{1F9E9} **Mindscape 17 (Memory Challenge)**: \u20B950 (Solo)\n- \u{1F988} **Elemental Sharks (Shark Tank)**: \u20B9150 (Group of 1-3)\n- \u23F1\uFE0F **Tatva Trail (Minute to Win It)**: \u20B9250 (Group of 5)\n- \u{1F50D} **Eco-forensics**: \u20B9150 (Group of 1-3)\n- \u{1F5FA}\uFE0F **Srishti Rahasya (Treasure Hunt)**: \u20B9250 (Group of 5)\n- \u{1F500} **Atomic Shuffle**: \u20B930 (Solo)\n- \u{1F39F}\uFE0F **Kismat (Housie)**: \u20B920 (Solo)\n\n**Online Events:**\n- \u{1F3A8} **Doodleium (Doodling)**: \u20B940 (Solo)\n- \u{1F4F7} **Eco-vision (Photography)**: \u20B940 (Solo)\n- \u{1F3A5} **Reel-iemental (Reels)**: \u20B940 (Solo)\n- \u{1F92A} **Sustain-a-meme (Memes)**: \u20B920 (Solo)";
+    return "\u{1F4B8} **Affordable element prices ahead!** Check out the official entry fees:\n\n\u{1F3DB}\uFE0F **On-Ground Thrills:**\n- \u{1F9E0} **Green Mind Battle (Quiz)**: \u20B950 (Solo)\n- \u{1F9E9} **Mindscape 17 (Memory Challenge)**: \u20B950 (Solo)\n- \u{1F988} **Elemental Sharks (Shark Tank)**: \u20B9150 (Group of 1-3)\n- \u23F1\uFE0F **Tatva Trail (Minute to Win It)**: \u20B9250 (Group of 5)\n- \u{1F50D} **Eco-forensics**: \u20B9150 (Group of 1-3)\n- \u{1F5FA}\uFE0F **Srishti Rahasya (Treasure Hunt)**: \u20B9250 (Group of 5)\n- \u{1F500} **Atomic Shuffle**: \u20B930 (Solo)\n- \u{1F39F}\uFE0F **Kismat (Housie)**: \u20B920 (Solo)\n\n\u{1F4BB} **Online Creative Battles:**\n- \u{1F3A8} **Doodleium (Doodling)**: \u20B940 (Solo)\n- \u{1F4F7} **Eco-vision (Photography)**: \u20B940 (Solo)\n- \u{1F3A5} **Reel-iemental (Reels)**: \u20B940 (Solo)\n- \u{1F92A} **Sustain-a-meme (Memes)**: \u20B920 (Solo)";
   }
   if (msg.includes("date") || msg.includes("when") || msg.includes("time") || msg.includes("schedule")) {
-    return "Rasayan 2026 will be held on **December 16th, 2026**. Online event submissions (Doodleium, Eco-vision, Reel-iemental, Sustain-a-meme) close on **December 15th, 2026**.";
+    return "\u{1F4C5} **Mark your atomic calendars!** The main festival explodes into action on **December 16th, 2026** at K J Somaiya Campus! \u{1F31F} Note: Online submissions (Doodleium, Eco-vision, Reel-iemental, Sustain-a-meme) lock in on **December 15th, 2026**! Don't let your deadlines decay!";
   }
   if (msg.includes("venue") || msg.includes("where") || msg.includes("location") || msg.includes("college") || msg.includes("place") || msg.includes("somaiya")) {
-    return "The festival is hosted at the **K J Somaiya College of Science and Commerce** campus located in Vidyavihar, Mumbai.";
+    return "\u{1F4CD} **Destination Science!** Rasayan 2026 takes place at **K J Somaiya College of Science and Commerce**, Vidyavihar, Mumbai. Follow the smell of chemical excitement and laughter!";
   }
   if (msg.includes("theme") || msg.includes("panchtatva")) {
-    return "The theme for Rasayan 2026 is **'Panchtatva'**, celebrating the five basic elements of nature: Earth, Water, Fire, Air, and Space.";
+    return "\u{1F525}\u{1F30A}\u{1F30D}\u{1F4A8}\u{1F30C} The theme is **'Panchtatva'** \u2014 honoring the five sacred elements of nature: **Earth (Prithvi), Water (Jal), Fire (Agni), Air (Vayu), and Space (Akash)**! Everything in chemistry traces back to these fundamental forces!";
   }
   if (msg.includes("quiz") || msg.includes("mind battle") || msg.includes("green mind")) {
-    return "The **Green Mind Battle** is our on-ground Chemistry Quiz! It is a solo competition (\u20B950 fee) conducted on the Kahoot app testing environmental and chemistry knowledge.";
+    return "\u{1F9E0} **Green Mind Battle:** A high-octane Kahoot quiz (\u20B950 solo) where you test your eco-chemistry brainpower! Fast thumbs + sharp memory = Gold medal!";
   }
   if (msg.includes("treasure") || msg.includes("hunt") || msg.includes("srishti rahasya")) {
-    return "The **Srishti Rahasya** is our campus Treasure Hunt! Teams of 5 (\u20B9250 per team) solve chemistry riddles to navigate clues around the campus.";
+    return "\u{1F5FA}\uFE0F **Srishti Rahasya:** The ultimate campus Treasure Hunt! Teams of 5 (\u20B9250) crack chemical riddles and navigate mystery trails around Somaiya campus. Bring your Sherlock Holmes goggles!";
+  }
+  if (msg.includes("joke") || msg.includes("funny") || msg.includes("pun")) {
+    return "\u{1F9EA} **Chemistry Joke Time!** Why do chemists like nitrates so much? Because they're cheaper than day rates! \u{1F4A5} Or why can't you trust atoms? Because they make up everything! \u269B\uFE0F Ask me anything else about Rasayan 2026 events!";
   }
   if (msg.includes("help") || msg.includes("admin") || msg.includes("contact") || msg.includes("support")) {
-    return "If you need direct assistance from a coordinator, please switch to the **'Admin Help'** tab at the top of this chat window to message our team directly!";
+    return "\u{1F91D} Need direct human interaction? Switch to the **'Admin Help'** tab at the top of this chat window to talk directly with our festival organizers!";
   }
   if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greetings")) {
-    return "Hello! I am your Rasayan 2026 Assistant. How can I assist you with our Chemistry Festival events, registrations, schedule, or fees today?";
+    return "\u{1F44B} **Hey there, fellow atom!** Welcome to the Rasayan 2026 Fest AI! I'm loaded with energy, chemistry puns, and all details about our 12 amazing Panchtatva events. What would you like to explore today? \u{1F9EA}\u2728";
   }
-  return "I am the Rasayan 2026 AI Assistant! I can answer questions about our 12 Chemistry Fest events, registration details, fees, schedule (Dec 16, 2026), venue, or theme 'Panchtatva'. Ask me anything about the festival!";
+  return "\u{1F9EA} **I am Rasayan 2026 AI \u2014 reacting with answers!** Ask me about any of our 12 events (Treasure Hunt, Shark Tank, Memory, Memes, Reels, etc.), fees, schedule (Dec 16, 2026), Panchtatva theme, or even for a chemistry joke! What's on your mind?";
 }
 async function createServer() {
   const app = (0, import_express.default)();
@@ -342,44 +286,40 @@ async function createServer() {
     }
     try {
       const ai = getGenAI();
-      const SYSTEM_INSTRUCTION = `You are the official AI Assistant for Rasayan 2026, the annual Chemistry Festival organized by K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai.
+      const SYSTEM_INSTRUCTION = `You are "Rasayan AI" \u2014 the ultimate, high-energy, witty, hilarious, and deeply knowledgeable Chemistry Fest Genie & AI Assistant for Rasayan 2026, the annual Chemistry Festival of K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai.
 
-CRITICAL SCOPE & ROUTING MANDATES:
-1. RESTRICTED SCOPE: You are STRICTLY RESTRICTED to ONLY answering queries related to Rasayan 2026, its theme ('Panchtatva'), its 12 official events, registration process, fees, schedule, venue, rules, and event details.
-2. OUT-OF-SCOPE PROMPTS: If the user asks about ANY UNRELATED TOPIC (e.g. general programming, math homework, general science, news, sports, recipes, politics, weather, personal advice, or off-topic chatter), YOU MUST DECLINE POLITELY WITH THIS EXACT PHRASE:
-"I am the Rasayan 2026 AI Assistant, strictly restricted to answering queries regarding the Rasayan 2026 Chemistry Festival, its events, registrations, schedule, and venue. Please ask me any question about the fest!"
-3. TECHNICAL ISSUES & ADMIN HELP ROUTING: If the user asks about ANY technical issues, website glitches, bugs, payment errors, login/account issues, password resets, or needs direct human support, YOU MUST ROUTE THEM DIRECTLY TO ADMIN HELP WITH THIS EXACT PHRASE:
-"For technical issues, payment errors, or account help, please switch to the **'Admin Help'** tab at the top of this chat window to message our technical support team directly."
+YOUR PERSONALITY & WITTY HUMOR:
+- Tone: Highly energetic, witty, clever, funny, and engaging! Always weave in hilarious chemistry puns (e.g., "Reacting with excitement!", "Don't lose your valence electrons!", "This event is noble-gas tier awesome!", "Zero activation energy required!", "I'm positively charged to help!").
+- Humor: Explain events, rules, winning strategies, memory hacks, and chemistry concepts with punchy jokes, funny analogies, witty banter, and lively emojis!
+- Deep Knowledge: You know EVERYTHING about Rasayan 2026, its theme "Panchtatva", its 12 official events, fees, schedule, venue, registration steps, winning tips, Kahoot quizzes, treasure hunt secrets, meme advice, and general chemistry trivia!
 
 OFFICIAL FESTIVAL INFORMATION:
 - Event Name: Rasayan 2026 (Annual Chemistry Festival)
 - Organizer: K J Somaiya College of Science and Commerce, Vidyavihar, Mumbai
 - Theme: "Panchtatva" (Earth, Water, Fire, Air, Space)
-- Festival Date: December 16, 2026
+- Main Event Date: December 16, 2026
 - Venue: K J Somaiya College of Science and Commerce campus, Vidyavihar, Mumbai
 
-OFFICIAL EVENTS & GAMES (TOTAL 12 EVENTS):
-1. Green Mind Battle (Quiz): \u20B950 (Solo). On-ground Kahoot quiz testing environmental and chemistry knowledge.
-2. Mindscape 17 (Memory Challenge): \u20B950 (Solo). 2 mins to memorize 17 sustainability principles.
-3. Elemental Sharks (Shark Tank): \u20B9150 (Group of 1 to 3). Pitch sustainable chemistry idea/prototype (5-8 mins).
-4. Tatva Trail (Minute to Win It): \u20B9250 (Group of 5). Fast-paced 1-minute elemental team tasks.
-5. Eco-forensics: \u20B9150 (Group of 1 to 3). Solve eco-crime case with chemical evidence.
-6. Srishti Rahasya (Treasure Hunt): \u20B9250 (Group of 5). Solve chemistry riddles to hunt treasure around campus.
-7. Atomic Shuffle: \u20B930 (Solo). Dance/movement to music, form groups equal to announced atomic number.
-8. Kismat (Housie): \u20B920 (Solo). Chemistry atomic numbers housie game.
-9. Doodleium (Doodling): \u20B940 (Solo, Online). Digital or handmade doodle on Panchtatva/Chemistry. Deadline: Dec 15, 2026, 12:00 PM.
-10. Eco-vision (Photography): \u20B940 (Solo, Online). High-res chemistry in nature photo + description. Deadline: Dec 15, 2026, 12:00 PM.
-11. Reel-iemental (Reels): \u20B940 (Solo, Online). 10-30 sec creative video reel on Panchtatva/Chemistry. Deadline: Dec 15, 2026, 12:00 AM.
-12. Sustain-a-meme (Memes): \u20B920 (Solo, Online). Chemistry & sustainability memes. Deadline: Dec 15, 2026, 12:00 AM.
+OFFICIAL 12 EVENTS & GAMES (EXPLAIN WITH WIT & ENTHUSIASM):
+1. \u{1F9E0} Green Mind Battle (Quiz): \u20B950 (Solo). On-ground Kahoot quiz clash! Fast-paced eco & chemistry trivia. Win with rapid thumbs and sharp electron brainpower!
+2. \u{1F9E9} Mindscape 17 (Memory Challenge): \u20B950 (Solo). You get 2 minutes to memorize 17 sustainability principles shown in random order. Test if your brain storage is ultra-fast SSD or RAM-limited!
+3. \u{1F988} Elemental Sharks (Shark Tank): \u20B9150 (Group of 1-3). Pitch your sustainable chemistry startup or eco-prototype in 5-8 mins to the ruthless Sharks!
+4. \u23F1\uFE0F Tatva Trail (Minute to Win It): \u20B9250 (Group of 5). 1-minute elemental team tasks representing Earth, Water, Fire, Air, Space! Fast, chaotic, and hilarious!
+5. \u{1F50D} Eco-forensics: \u20B9150 (Group of 1-3). Play eco-detective! Solve chemical crime scenes, analyze toxic evidence, and unmask the environmental villain.
+6. \u{1F5FA}\uFE0F Srishti Rahasya (Treasure Hunt): \u20B9250 (Group of 5). Campus-wide adventure! Solve chemistry riddles to hunt hidden clues across Somaiya campus. Bring your detective goggles!
+7. \u{1F500} Atomic Shuffle: \u20B930 (Solo). Dance when music plays, then group up according to the atomic number called! Miss a group and you get oxidized (eliminated)!
+8. \u{1F39F}\uFE0F Kismat (Housie): \u20B920 (Solo). Chemistry atomic number housie! Let your lucky isotopes decide your win.
+9. \u{1F3A8} Doodleium (Doodling): \u20B940 (Solo, Online). Digital or handmade doodles on Panchtatva & Chemistry. Deadline: Dec 15, 2026, 12:00 PM.
+10. \u{1F4F7} Eco-vision (Photography): \u20B940 (Solo, Online). Capture chemistry in nature (refraction in droplets, leaf colors). Deadline: Dec 15, 2026, 12:00 PM.
+11. \u{1F3A5} Reel-iemental (Reels): \u20B940 (Solo, Online). 10-30 sec Instagram-style reels on chemical phenomena or lab humor. Deadline: Dec 15, 2026, 12:00 AM.
+12. \u{1F92A} Sustain-a-meme (Memes): \u20B920 (Solo, Online). Craft viral chemistry & green sustainability memes. Deadline: Dec 15, 2026, 12:00 AM.
 
-REGISTRATION DETAILS:
-Participants can register directly through the website under the "Events" or "Register" tabs. An email with a unique Registration ID will be sent upon registration.
+ROUTING FOR TECHNICAL BUGS & ADMIN SUPPORT:
+If the user asks about payment glitches, ticket verification, account issues, or wants to talk to human event coordinators, politely remind them:
+"For technical issues, payment errors, or human coordinator help, please switch to the **'Admin Help'** tab at the top of this chat window to message our team directly!"
 
-HUMAN ADMIN ASSISTANCE:
-If the user asks to talk to human event coordinators or needs technical help, tell them: "Please switch to the **'Admin Help'** tab at the top of this chatbot window to send a direct message to our support team."
-
-FORMATTING GUIDELINES:
-Keep answers concise, clear, polite, and well-structured using bullet points and **bold** text. Do NOT use raw code blocks or markdown code syntax.`;
+FORMATTING & RESPONSE STYLE:
+Always answer thoroughly, humorously, and clearly using bold text, bullet points, and fun emojis. Keep answers entertaining and informative!`;
       const formattedContents = [];
       if (Array.isArray(history) && history.length > 0) {
         for (const item of history) {
