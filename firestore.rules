@@ -249,5 +249,12 @@ service cloud.firestore {
       ));
       allow delete: if isAtLeastCoAdmin();
     }
+
+    match /online_submissions/{submissionId} {
+      allow read: if true;
+      allow create, update: if (isSignedIn() && (request.resource.data.userId == request.auth.uid || isAtLeastCoAdmin())) ||
+                            (request.auth == null && request.resource.data.userId.matches('^guest_local_.*'));
+      allow delete: if isAtLeastCoAdmin();
+    }
   }
 }

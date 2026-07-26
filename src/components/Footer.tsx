@@ -27,7 +27,6 @@ export default function Footer() {
               <li><a href="/#/events" className="hover:text-brand-primary transition-colors">All Events</a></li>
               <li><a href="/#/register" className="hover:text-brand-primary transition-colors">Registration</a></li>
               <li><a href="/#/dashboard" className="hover:text-brand-primary transition-colors">My Dashboard</a></li>
-              <li><a href="/#/verify" className="hover:text-brand-primary transition-colors flex items-center gap-1.5 text-emerald-400 font-semibold"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Verify Entry Pass</a></li>
             </ul>
           </div>
           

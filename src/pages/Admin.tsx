@@ -4,7 +4,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, orderBy, query, doc, updateDoc, onSnapshot, setDoc, writeBatch, deleteDoc, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { useEvents } from '../context/EventContext';
 import { motion } from 'motion/react';
-import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode, FileSpreadsheet, ExternalLink, RefreshCw, Check } from 'lucide-react';
+import { Shield, Users, Filter, Download, FileText, Table as TableIcon, CheckCircle, XCircle, Clock, CreditCard, Brain, Trash2, Plus, Save, Play, Square, Map, Key, Trophy, MessageSquare, Send, Sparkles, Flag, AlertTriangle, QrCode, FileSpreadsheet, ExternalLink, RefreshCw, Check, Upload } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -19,7 +19,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'registrations' | 'quiz' | 'treasure' | 'events' | 'announcements' | 'support' | 'chat' | 'gsheets'>('registrations');
+  const [activeTab, setActiveTab] = useState<'registrations' | 'quiz' | 'treasure' | 'events' | 'submissions' | 'announcements' | 'support' | 'chat' | 'gsheets'>('registrations');
 
   // Google Sheets integration state
   const [sheetIdInput, setSheetIdInput] = useState<string>(() => localStorage.getItem('rasayan_gsheet_id') || '');
@@ -415,6 +415,10 @@ export default function Admin() {
   const [editingReg, setEditingReg] = useState<any>(null);
   const [fullscreenBoard, setFullscreenBoard] = useState<'none' | 'quiz' | 'treasure'>('none');
   const [reportedPosts, setReportedPosts] = useState<any[]>([]);
+  const [onlineSubmissions, setOnlineSubmissions] = useState<any[]>([]);
+  const [selectedSubmissionEventFilter, setSelectedSubmissionEventFilter] = useState<string>('all');
+  const [submissionSearch, setSubmissionSearch] = useState<string>('');
+  const [lightboxSubmission, setLightboxSubmission] = useState<any | null>(null);
 
   useEffect(() => {
     if (isAtLeastCoAdmin) {
@@ -441,10 +445,19 @@ export default function Admin() {
         console.error("Reported Messages Error:", err);
       });
 
+      // Listen for online submissions
+      const qSubmissions = query(collection(db, 'online_submissions'));
+      const unsubSubmissions = onSnapshot(qSubmissions, (snap) => {
+        setOnlineSubmissions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (err) => {
+        console.error("Online Submissions Error:", err);
+      });
+
       return () => {
         unsubRegs();
         unsubAnnounce();
         unsubReported();
+        unsubSubmissions();
       };
     }
   }, [isAtLeastCoAdmin]);
@@ -1254,6 +1267,16 @@ export default function Admin() {
                 className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === 'events' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-text-muted hover:text-text-main'}`}
               >
                 Event Prices & Details
+              </button>
+              <button 
+                onClick={() => setActiveTab('submissions')}
+                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-all border-b-2 flex items-center gap-1.5 ${activeTab === 'submissions' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-text-muted hover:text-text-main'}`}
+              >
+                <Upload className="w-4 h-4 text-emerald-600" />
+                Online Submissions
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                  {onlineSubmissions.length}
+                </span>
               </button>
               <button 
                 onClick={() => setActiveTab('support')}
@@ -2733,6 +2756,265 @@ export default function Admin() {
                 </div>
               </div>
             </div>
+          </div>
+        ) : activeTab === 'submissions' ? (
+          <div className="space-y-8">
+            {/* Header & Controls */}
+            <div className="glass-card p-6 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-serif font-bold text-brand-dark flex items-center gap-2">
+                  <Upload className="w-6 h-6 text-emerald-600" />
+                  Online Submissions Hub
+                </h3>
+                <p className="text-xs text-text-muted">
+                  View, filter, preview, and export artwork, photos, reels, memes, and links submitted by participants.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => {
+                    const headers = ["Submission ID", "Participant Name", "Email", "Phone", "College", "Event Name", "Submission Type", "Data Content", "Caption", "Submitted At"];
+                    const rows = onlineSubmissions.map(s => [
+                      s.id,
+                      s.userName,
+                      s.userEmail,
+                      s.phone || 'N/A',
+                      s.college || 'N/A',
+                      s.eventName,
+                      s.submissionType,
+                      s.submissionType === 'link' ? s.linkUrl : (s.fileData?.name || 'Uploaded File'),
+                      s.caption || '',
+                      new Date(s.submittedAt).toLocaleString()
+                    ]);
+                    const csvContent = [headers, ...rows].map(e => e.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(",")).join("\n");
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `rasayan_online_submissions_${Date.now()}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-200 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" /> Export CSV ({onlineSubmissions.length})
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                placeholder="Search participant name, email, or college..."
+                value={submissionSearch}
+                onChange={e => setSubmissionSearch(e.target.value)}
+                className="input-field text-xs py-3"
+              />
+
+              <select
+                value={selectedSubmissionEventFilter}
+                onChange={e => setSelectedSubmissionEventFilter(e.target.value)}
+                className="input-field text-xs py-3 font-semibold"
+              >
+                <option value="all">All Online Competitions ({onlineSubmissions.length})</option>
+                {Array.from(new Set(onlineSubmissions.map(s => s.eventName))).map((evtName: any) => (
+                  <option key={evtName} value={evtName}>{evtName}</option>
+                ))}
+              </select>
+
+              <div className="p-3 bg-brand-soft rounded-2xl border border-brand-primary/10 flex items-center justify-between text-xs font-bold text-brand-dark">
+                <span>Total Matches:</span>
+                <span className="px-3 py-1 bg-brand-primary text-white rounded-full font-mono">
+                  {onlineSubmissions.filter(s => {
+                    const matchEvent = selectedSubmissionEventFilter === 'all' || s.eventName === selectedSubmissionEventFilter;
+                    const matchQuery = !submissionSearch || (
+                      s.userName?.toLowerCase().includes(submissionSearch.toLowerCase()) ||
+                      s.userEmail?.toLowerCase().includes(submissionSearch.toLowerCase()) ||
+                      s.college?.toLowerCase().includes(submissionSearch.toLowerCase())
+                    );
+                    return matchEvent && matchQuery;
+                  }).length} Entries
+                </span>
+              </div>
+            </div>
+
+            {/* Submissions Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {onlineSubmissions
+                .filter(s => {
+                  const matchEvent = selectedSubmissionEventFilter === 'all' || s.eventName === selectedSubmissionEventFilter;
+                  const matchQuery = !submissionSearch || (
+                    s.userName?.toLowerCase().includes(submissionSearch.toLowerCase()) ||
+                    s.userEmail?.toLowerCase().includes(submissionSearch.toLowerCase()) ||
+                    s.college?.toLowerCase().includes(submissionSearch.toLowerCase())
+                  );
+                  return matchEvent && matchQuery;
+                })
+                .map((sub) => (
+                  <div key={sub.id} className="glass-card p-6 rounded-[2rem] bg-white border border-gray-100 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-lg transition-all">
+                    <div>
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="px-2.5 py-1 bg-brand-soft text-brand-primary font-bold text-[10px] uppercase tracking-wider rounded-lg border border-brand-primary/10">
+                          {sub.eventName}
+                        </span>
+                        <span className="text-[10px] font-mono text-text-muted">
+                          {new Date(sub.submittedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <h4 className="text-base font-bold text-brand-dark truncate">{sub.userName}</h4>
+                      <p className="text-xs text-text-muted truncate mb-1">{sub.userEmail}</p>
+                      <p className="text-[11px] text-gray-500 font-medium truncate mb-4">📍 {sub.college || 'No college'}</p>
+
+                      {/* File / Link Content Box */}
+                      {sub.submissionType === 'file' && sub.fileData ? (
+                        <div className="relative rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 group mb-3">
+                          {sub.fileData.dataUrl?.startsWith('data:image') ? (
+                            <img
+                              src={sub.fileData.dataUrl}
+                              alt={sub.fileData.name}
+                              className="w-full h-44 object-cover group-hover:scale-105 transition-transform cursor-pointer"
+                              onClick={() => setLightboxSubmission(sub)}
+                            />
+                          ) : (
+                            <div className="p-6 text-center space-y-2">
+                              <FileText className="w-10 h-10 text-brand-primary mx-auto" />
+                              <p className="text-xs font-bold text-brand-dark truncate">{sub.fileData.name}</p>
+                              <span className="text-[10px] text-text-muted uppercase">{(sub.fileData.size / 1024).toFixed(1)} KB</span>
+                            </div>
+                          )}
+                          
+                          <button
+                            onClick={() => setLightboxSubmission(sub)}
+                            className="absolute bottom-2 right-2 bg-black/70 hover:bg-black text-white px-3 py-1 rounded-xl text-[10px] font-bold backdrop-blur-sm shadow"
+                          >
+                            Preview Data
+                          </button>
+                        </div>
+                      ) : sub.submissionType === 'link' && sub.linkUrl ? (
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-3 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Project / Video URL</span>
+                          <a
+                            href={sub.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-brand-primary font-bold hover:underline break-all flex items-center gap-1.5"
+                          >
+                            {sub.linkUrl} <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                          </a>
+                        </div>
+                      ) : null}
+
+                      {/* Caption */}
+                      {sub.caption && (
+                        <p className="text-xs italic text-text-muted bg-gray-50 p-3 rounded-xl border border-gray-100 line-clamp-2">
+                          "{sub.caption}"
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-gray-400">ID: {sub.id.substring(0, 10)}...</span>
+                      {!isReadOnly && (
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(`Delete submission from ${sub.userName}?`)) return;
+                            try {
+                              await deleteDoc(doc(db, 'online_submissions', sub.id));
+                            } catch (err: any) {
+                              console.error(err);
+                              alert("Failed to delete submission.");
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+              {onlineSubmissions.length === 0 && (
+                <div className="col-span-full py-16 text-center glass-card rounded-[2.5rem] bg-white">
+                  <Upload className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h4 className="text-base font-bold text-brand-dark mb-1">No Online Submissions Yet</h4>
+                  <p className="text-xs text-text-muted">When participants submit artwork or project links from the Live Arena, they will appear here in real time.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Lightbox Modal */}
+            {lightboxSubmission && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+                <div className="bg-white rounded-[2rem] max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                  <button
+                    onClick={() => setLightboxSubmission(null)}
+                    className="absolute top-4 right-4 p-2 text-gray-500 hover:text-black rounded-full bg-gray-100"
+                  >
+                    ×
+                  </button>
+
+                  <h3 className="text-xl font-serif font-bold text-brand-dark mb-1">{lightboxSubmission.eventName} Submission</h3>
+                  <p className="text-xs text-text-muted mb-4">By {lightboxSubmission.userName} ({lightboxSubmission.userEmail})</p>
+
+                  {lightboxSubmission.fileData?.dataUrl?.startsWith('data:image') ? (
+                    <img
+                      src={lightboxSubmission.fileData.dataUrl}
+                      alt={lightboxSubmission.fileData.name}
+                      className="w-full max-h-[60vh] object-contain rounded-2xl border border-gray-200 mb-4 bg-black"
+                    />
+                  ) : lightboxSubmission.linkUrl ? (
+                    <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl mb-4 text-center">
+                      <p className="text-xs text-slate-600 mb-2 font-bold">External Submission Link:</p>
+                      <a
+                        href={lightboxSubmission.linkUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-bold text-brand-primary underline break-all"
+                      >
+                        {lightboxSubmission.linkUrl}
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-gray-50 rounded-2xl mb-4">
+                      <FileText className="w-12 h-12 text-brand-primary mx-auto mb-2" />
+                      <p className="font-bold text-sm text-brand-dark">{lightboxSubmission.fileData?.name}</p>
+                    </div>
+                  )}
+
+                  {lightboxSubmission.caption && (
+                    <div className="p-4 bg-brand-soft rounded-2xl border border-brand-primary/10 mb-4">
+                      <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-1">Participant Concept / Caption:</p>
+                      <p className="text-xs text-brand-dark italic">"{lightboxSubmission.caption}"</p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3">
+                    {lightboxSubmission.fileData?.dataUrl && (
+                      <a
+                        href={lightboxSubmission.fileData.dataUrl}
+                        download={lightboxSubmission.fileData.name || 'submission'}
+                        className="btn-primary py-2.5 px-6 text-xs font-bold flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" /> Download Original File
+                      </a>
+                    )}
+                    <button
+                      onClick={() => setLightboxSubmission(null)}
+                      className="btn-secondary py-2.5 px-6 text-xs font-bold"
+                    >
+                      Close Preview
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === 'announcements' ? (
           <div className="space-y-12">

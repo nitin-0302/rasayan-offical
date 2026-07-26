@@ -20,7 +20,6 @@ import Quiz from './pages/Quiz';
 import TreasureHunt from './pages/TreasureHunt';
 import Games from './pages/Games';
 import Community from './pages/Community';
-import VerifyPass from './pages/VerifyPass';
 import Chatbot from './components/Chatbot';
 import CursorGlow from './components/CursorGlow';
 
@@ -45,7 +44,6 @@ export default function App() {
                 <Route path="/quiz" element={<Quiz />} />
                 <Route path="/treasure-hunt" element={<TreasureHunt />} />
                 <Route path="/community" element={<Community />} />
-                <Route path="/verify" element={<VerifyPass />} />
               </Routes>
             </main>
             <Footer />

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Download, QrCode, X, Sparkles, Building2, User, Calendar, ExternalLink, CheckCircle2, Copy, Check } from 'lucide-react';
+import { ShieldCheck, Download, QrCode, X, Sparkles, Building2, User, Calendar, CheckCircle2, Copy, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { EVENTS } from '../constants/events';
@@ -28,12 +28,11 @@ export default function EntryPassModal({ registration, onClose }: EntryPassModal
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Generate verification URL for the QR code
-  const origin = window.location.origin + window.location.pathname;
-  const verifyUrl = `${origin}#/verify?code=${registration.uniqueCode}`;
+  // Generate QR code with pass details
+  const passData = `Rasayan 2026 Pass | Code: ${registration.uniqueCode} | Participant: ${registration.userName}`;
   
   // High quality QR code URL from QRServer in deep crimson red tint
-  const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(verifyUrl)}&color=881337&bgcolor=ffffff&margin=10`;
+  const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(passData)}&color=881337&bgcolor=ffffff&margin=10`;
 
   const copyCode = () => {
     navigator.clipboard.writeText(registration.uniqueCode);
@@ -249,20 +248,11 @@ export default function EntryPassModal({ registration, onClose }: EntryPassModal
           <div className="flex items-center gap-2">
             <button
               onClick={copyCode}
-              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-medium transition-colors flex items-center gap-1.5"
+              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl font-medium transition-colors flex items-center gap-1.5"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-red-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Code Copied!' : `Code: ${registration.uniqueCode}`}</span>
+              <span>{copied ? 'Code Copied!' : `Pass Code: ${registration.uniqueCode}`}</span>
             </button>
-            <a
-              href={`/#/verify?code=${registration.uniqueCode}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs bg-slate-800 hover:bg-slate-700 text-red-400 px-3 py-2 rounded-xl font-medium transition-colors flex items-center gap-1.5"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Test Verify Page</span>
-            </a>
           </div>
 
           <div className="flex items-center gap-2">
